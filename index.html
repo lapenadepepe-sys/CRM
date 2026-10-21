@@ -6,7 +6,12 @@
 <title>Peña de Pepe | Gestión Comercial, Eventos y Contenidos</title>
 
 <!-- SUPABASE JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://dlbwfdmatbuutjzynkms.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_tu_clave_copiada_aqui';
+
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+</script>
 
 <style>
 :root {
