@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Peña de Pepe | Gestión Comercial, Eventos y Contenidos</title>
+<style>
+:root {
+  --wine: #5b1825;
+  --wine-dark: #3e0f18;
+  --wine-light: #762b36;
+  --gold: #c6a15b;
+  --gold-light: #e2ca91;
+  --cream: #f8f4ec;
+  --paper: #ffffff;
+  --ink: #28231e;
+  --muted: #776d62;
+  --line: #e6dac7;
+  --green: #2e6930;
+  --red: #9a3434;
+  --blue: #2563eb;
+  --shadow: 0 10px 25px -5px rgba(53,16,24,0.08), 0 4px 10px -6px rgba(53,16,24,0.04);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
+}
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+/* Dashboard Layout */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar Estilo Dashboard */
+.sidebar {
+  width: 250px;
+  background: var(--wine);
+  color: var(--cream);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  font-family: Georgia, serif;
+  font-weight: bold;
+  font-size: 22px;
+  color: var(--gold-light);
+  margin-bottom: 8px;
+  padding: 0 10px;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar-nav-title {
+  font: 700 10px -apple-system, sans-serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(232, 220, 202, 0.5);
+  padding: 0 10px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+.sidebar-nav button {
+  background: transparent;
+  border: 0;
+  color: var(--cream);
+  padding: 10px 12px;
+  text-align: left;
+  border-radius: 6px;
+  font: 600 13px -apple-system, sans-serif;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-nav button.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--gold-light);
+  border-left: 3px solid var(--gold);
+}
+.sidebar-nav button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Áreas Principales */
+.main-area {
+  flex-grow: 1;
+  background: var(--cream);
+  padding: 28px clamp(16px, 3vw, 40px);
+  max-width: 1400px;
+}
+.header-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.top-sub { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+h1.welcome-msg { margin: 0; font-size: clamp(22px, 3vw, 30px); font-weight: 600; font-family: Georgia, serif; color: var(--wine); }
+
+/* Dashboard Grid Widgets */
+.widgets-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.widgets-left-col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.stat-card.color-box { background: var(--wine); color: var(--cream); }
+.stat-card.paper-box { background: var(--paper); border: 1px solid var(--line); }
+
+.card-title { font: 700 10px -apple-system, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;}
+.color-box .card-title { color: var(--gold-light); }
+.stat-card strong { display: block; font-size: 28px; font-weight: 600; font-family: Georgia, serif; }
+
+.small-stat-row { display: flex; gap: 10px; margin-top: 10px; }
+.small-stat-item { flex: 1; }
+.small-stat-item strong { font-size: 15px; margin: 0; }
+.small-stat-item span { font-size: 10px; color: var(--muted); display: block; }
+.color-box .small-stat-item span { color: var(--gold-light); }
+
+/* Mini Calendario Widget */
+.calendar-card {
+  padding: 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.cal-month { font-weight: bold; font-size: 13px; color: var(--wine); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 11px; text-align: center; }
+.cal-day-head { font-weight: bold; color: var(--muted); padding: 4px; }
+.cal-day { padding: 6px 2px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; }
+.cal-day:hover:not(.muted) { background: var(--cream); border-color: var(--line); }
+.cal-day.active { background: var(--wine); color: var(--cream); font-weight: bold; }
+.cal-day.event-day { border-bottom: 3px solid var(--gold); }
+.cal-day.muted { color: var(--muted); opacity: 0.4; }
+
+/* Botones & Helpers */
+.btn {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--wine);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font: 600 12px -apple-system, sans-serif;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { background: #fdfaf3; border-color: var(--gold); }
+.btn.primary { background: var(--gold); border-color: var(--gold); color: #261114; }
+.btn.primary:hover { background: #b8934d; }
+.btn.dark { background: rgba(255,255,255,0.12); color: var(--cream); border: 0; }
+.btn.danger { color: var(--red); border-color: #f3c7c7; }
+.btn.sm { padding: 4px 8px; font-size: 11px; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.toolbar input, .toolbar select { flex-grow: 1; min-width: 140px; }
+
+.pill {
+  display: inline-block;
+  padding: 3px 8px;
+  font: 700 10px -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #eee4d4;
+  color: #6d4b2a;
+  border-radius: 4px;
+}
+.pill.blue { background: #dbeafe; color: var(--blue); }
+.pill.overdue { background: #f4dedd; color: var(--red); }
+.pill.green { background: #e0ebdf; color: var(--green); }
+
+.hidden { display: none !important; }
+.panel, .record, .kanban-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.panel { padding: 18px; margin-bottom: 18px; }
+.record { padding: 12px 14px; margin-bottom: 10px; }
+.empty { padding: 28px; text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 8px; background: #faf7f2; }
+
+/* Forms */
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field label { font: 700 11px -apple-system, sans-serif; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.field-note { font-size: 11px; color: #888; font-style: italic; }
+input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); background: #fffefa; border-radius: 4px; color: var(--ink); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); background: #fff; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.full { grid-column: 1 / -1; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { text-align: left; font: 700 10px -apple-system, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+.table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table tr:hover td { background: #fdfaf3; }
+
+/* Kanban Board */
+.kanban-board { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+.kanban-col { background: #f3ece0; border-radius: 8px; padding: 10px; min-height: 400px; display: flex; flex-direction: column; }
+.kanban-col-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.kanban-col-head h3 { margin: 0; font-size: 12px; font-weight: 700; color: var(--wine); text-transform: uppercase; }
+.kanban-cards { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.kanban-card { padding: 10px; cursor: grab; user-select: none; }
+.kanban-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.drag-over { background: #e8ded0; border: 2px dashed var(--gold); }
+
+/* Timeline */
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.timeline-item { padding: 10px; background: #fbf8f3; border-left: 3px solid var(--gold); border-radius: 0 6px 6px 0; font-size: 12px; }
+
+/* Modales */
+.modal { position: fixed; inset: 0; background: rgba(33, 17, 22, 0.6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; backdrop-filter: blur(2px); }
+.modal-box { width: min(650px, 100%); max-height: 90vh; overflow-y: auto; background: var(--paper); padding: 20px; border-radius: 8px; border-top: 5px solid var(--gold); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.close { border: 0; background: none; font-size: 22px; color: var(--muted); cursor: pointer; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--wine); color: white; padding: 10px 20px; border-radius: 20px; border: 1px solid var(--gold); display: none; z-index: 200; font-size: 13px; font-weight: bold; }
+
+/* Selection Grid */
+.selector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+.selector-card { border: 2px solid var(--line); border-radius: 8px; padding: 14px; text-align: center; cursor: pointer; }
+.selector-card:hover { border-color: var(--gold); background: #fdfbf7; }
+
+@media(max-width: 900px) {
+  .dashboard-layout { flex-direction: column; }
+  .sidebar { width: 100%; }
+  .widgets-grid { grid-template-columns: 1fr; }
+  .widgets-left-col { grid-template-columns: 1fr; }
+  .kanban-board { grid-template-columns: 1fr; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+
+<div class="dashboard-layout">
+  <!-- SIDEBAR (MENÚ PRINCIPAL) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">PEÑA DE PEPE</div>
+    
+    <div class="sidebar-nav" id="adminSidebar">
+      <div class="sidebar-nav-title">General</div>
+      <button class="active" data-tab="home" onclick="tab('home')">📊 Visión General</button>
+      <button data-tab="events" onclick="tab('events')">📅 Eventos & Planificación</button>
+      <button data-tab="content" onclick="tab('content')">📱 Redes & Contenidos</button>
+
+      <div class="sidebar-nav-title">Gestión Comercial</div>
+      <button data-tab="sponsors" onclick="tab('sponsors')">🤝 Sponsors & Kanban</button>
+      <button data-tab="singers" onclick="tab('singers')">🎤 Cantores / Músicos</button>
+      <button data-tab="opportunities" onclick="tab('opportunities')">📢 Oportunidades</button>
+
+      <div class="sidebar-nav-title">Finanzas & Control</div>
+      <button data-tab="finance" onclick="tab('finance')">💰 Ingresos / Egresos Extras</button>
+      <button data-tab="comms" onclick="tab('comms')">💬 Comunicaciones</button>
+      <button data-tab="settings" onclick="tab('settings')">⚙️ Ajustes & Datos</button>
+    </div>
+  </aside>
+
+  <!-- ÁREA PRINCIPAL -->
+  <main class="main-area">
+    <header class="header-area">
+      <div>
+        <h1 class="welcome-msg" id="welcomeUser">¡Hola, Pepe!</h1>
+        <p class="top-sub" id="topSub">Panel integrado de gestión comercial, producciones y contenidos.</p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn dark" style="background:var(--wine); color:var(--cream);" onclick="switchUserRoleModal()">👤 Cambiar Modo</button>
+        <button class="btn primary" onclick="openNewRecordSelector()">＋ Nuevo Registro</button>
+      </div>
+    </header>
+
+    <!-- SECCIÓN 1: VISIÓN GENERAL (STYLE DASHBOARD) -->
+    <section id="home">
+      <div class="widgets-grid">
+        <div class="widgets-left-col">
+          <!-- Widget Redes sociales / Seguidores -->
+          <div class="stat-card color-box">
+            <span class="card-title">Impacto Digital & Audiencia</span>
+            <strong id="nFollowers">10.450</strong>
+            <div class="small-stat-row">
+              <div class="small-stat-item">
+                <span id="nPosts">12 Posts este mes</span>
+              </div>
+              <div class="small-stat-item">
+                <span>Engagement: <b>5.8%</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget Finanzas unificadas -->
+          <div class="stat-card paper-box">
+            <span class="card-title">Balance de Cobros & Extras</span>
+            <strong id="balanceNet">$ 0</strong>
+            <div class="small-stat-row">
+              <div class="small-stat-item">
+                <span>Cobros Sponsors: <b id="sponsorsPending">$ 0</b></span>
+              </div>
+              <div class="small-stat-item">
+                <span>Finanzas Extras: <b id="extraNet">$ 0</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget Próximo Evento Destacado -->
+          <div class="stat-card paper-box" style="grid-column: span 2;">
+            <span class="card-title">Próxima Fecha de la Peña</span>
+            <strong id="nextEventTitle" style="font-size:20px; color:var(--wine);">Sin eventos próximos</strong>
+            <p id="nextEventMeta" style="margin:4px 0 0; color:var(--muted); font-size:12px;">Planificá nuevas fechas desde el módulo de eventos.</p>
+          </div>
+        </div>
+
+        <!-- Calendario Widget -->
+        <div class="calendar-card">
+          <div class="cal-head">
+            <span class="cal-month">Octubre 2026</span>
+            <button class="btn sm" onclick="tab('events')">Ver agenda</button>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-day-head">D</div><div class="cal-day-head">L</div><div class="cal-day-head">M</div><div class="cal-day-head">X</div><div class="cal-day-head">J</div><div class="cal-day-head">V</div><div class="cal-day-head">S</div>
+            
+            <div class="cal-day muted">27</div><div class="cal-day muted">28</div><div class="cal-day muted">29</div><div class="cal-day muted">30</div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div>
+            <div class="cal-day">4</div><div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div><div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div>
+            <div class="cal-day">11</div><div class="cal-day event-day">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div>
+            <div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div><div class="cal-day active">21</div><div class="cal-day">22</div><div class="cal-day event-day">23</div><div class="cal-day">24</div>
+            <div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day">28</div><div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla Resumen de Tareas & Contenidos Pendientes -->
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="margin:0; font-size:18px; color:var(--wine);">Contenidos y Tareas para Hoy / Próximos días</h2>
+          <button class="btn sm primary" onclick="openForm('content')">＋ Nuevo Contenido</button>
+        </div>
+        <div id="homeContentTasks"></div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: PLANIFICACIÓN DE EVENTOS -->
+    <section id="events" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 style="margin:0; color:var(--wine);">Planificación de Eventos</h2>
+            <p style="margin:2px 0; color:var(--muted); font-size:12px;">Organización de fechas, grilla de artistas y lista de actividades.</p>
+          </div>
+          <button class="btn primary" onclick="openForm('event')">＋ Crear Evento</button>
+        </div>
+      </div>
+      <div id="eventsList"></div>
+    </section>
+
+    <!-- SECCIÓN 3: GESTIÓN DE REDES Y CONTENIDOS -->
+    <section id="content" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h2 style="margin:0; color:var(--wine);">Cronograma de Redes y Contenidos</h2>
+            <p style="margin:2px 0; color:var(--muted); font-size:12px;">Pautas, reels, carruseles y publicaciones promocionales.</p>
+          </div>
+          <button class="btn primary" onclick="openForm('content')">＋ Programar Publicación</button>
+        </div>
+        <div class="toolbar">
+          <select id="cPlatformFilter" onchange="renderContentList()" style="max-width:180px;">
+            <option value="">Todas las redes</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="TikTok">TikTok</option>
+            <option value="YouTube">YouTube</option>
+          </select>
+          <select id="cStatusFilter" onchange="renderContentList()" style="max-width:180px;">
+            <option value="">Todos los estados</option>
+            <option value="Pauta">Pauta / Idea</option>
+            <option value="Producción">En producción</option>
+            <option value="Listo">Listo</option>
+            <option value="Publicado">Publicado</option>
+          </select>
+        </div>
+      </div>
+      <div id="contentList"></div>
+    </section>
+
+    <!-- SECCIÓN 4: SPONSORS (KANBAN / LISTA) -->
+    <section id="sponsors" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 style="margin:0; color:var(--wine);">Gestión Comercial de Sponsors</h2>
+            <p style="margin:2px 0; color:var(--muted); font-size:12px;">Tablero Kanban e historial de acuerdos comerciales.</p>
+          </div>
+          <button class="btn primary" onclick="openForm('sponsor')">＋ Nuevo Sponsor</button>
+        </div>
+        <div class="toolbar" style="margin-top:12px;">
+          <input id="sSearch" placeholder="Buscar sponsor..." oninput="renderSponsors()">
+          <select id="sCatFilter" onchange="renderSponsors()" style="max-width:160px;">
+            <option value="">Categorías</option>
+            <option value="Principal">Principal</option>
+            <option value="Apoyo">Apoyo</option>
+            <option value="__none__">Sin categoría</option>
+          </select>
+          <button class="btn sm" id="sViewToggle" onclick="toggleSponsorView()">📋 Ver como lista</button>
+        </div>
+      </div>
+      <div id="sponsorKanbanView" class="kanban-board"></div>
+      <div id="sponsorListView" class="table-wrap hidden"></div>
+    </section>
+
+    <!-- SECCIÓN 5: CANTORES Y MÚSICOS -->
+    <section id="singers" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="margin:0; color:var(--wine);">Catálogo de Cantores y Músicos</h2>
+          <button class="btn primary" onclick="openForm('singer')">＋ Registrar Cantor</button>
+        </div>
+        <div class="toolbar">
+          <input id="cSearch" placeholder="Buscar por nombre, documento, ciudad..." oninput="renderSingers()">
+        </div>
+        <div class="table-wrap" id="cTable"></div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 6: OPORTUNIDADES -->
+    <section id="opportunities" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="margin:0; color:var(--wine);">Llamados y Convocatorias Abiertas</h2>
+          <button class="btn primary" onclick="openForm('opportunity')">＋ Nueva Oportunidad</button>
+        </div>
+        <div id="oList"></div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 7: INGRESOS Y EGRESOS EXTRAS -->
+    <section id="finance" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h2 style="margin:0; color:var(--wine);">Reporte de Ingresos y Egresos Extras</h2>
+            <p style="margin:2px 0; color:var(--muted); font-size:12px;">Control financiero por representación de artistas y producción de eventos.</p>
+          </div>
+          <button class="btn primary" onclick="openForm('finance')">＋ Registrar Movimiento</button>
+        </div>
+        <div class="table-wrap" id="fTable"></div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 8: COMUNICACIONES -->
+    <section id="comms" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h2 style="margin:0; color:var(--wine);">Campañas de Comunicación</h2>
+            <p style="margin:2px 0; color:var(--muted); font-size:12px;">Prepará mensajes masivos para sponsors, cantores o listas de difusión.</p>
+          </div>
+          <button class="btn primary" onclick="openForm('campaign')">＋ Nueva Campaña</button>
+        </div>
+        <div id="campaignsList"></div>
+      </div>
+      <div class="panel">
+        <h2 style="margin:0 0 12px; color:var(--wine);">Historial Unificado de Comunicaciones</h2>
+        <div id="commsList" class="timeline"></div>
+      </div>
+    </section>
+
+    <!-- PORTAL CANTORES (MODO VISTA RESTRICTA) -->
+    <section id="cantorPortal" class="hidden">
+      <div class="panel" style="border-top:4px solid var(--gold);">
+        <h2 style="margin:0; color:var(--wine);">Portal del Cantor / Músico</h2>
+        <p>Postulate a convocatorias y mantené actualizados tus datos artísticos.</p>
+        <button class="btn primary sm" style="margin-top:10px;" onclick="openForm('singer')">✏️ Registrar / Actualizar mi Perfil</button>
+      </div>
+      <div id="cantorOppsList"></div>
+    </section>
+
+    <!-- SECCIÓN 9: AJUSTES -->
+    <section id="settings" class="hidden">
+      <div class="panel">
+        <h2 style="margin:0 0 12px; color:var(--wine);">Respaldo y Ajustes de Datos</h2>
+        <button class="btn primary" onclick="exportData()">Descargar copia JSON</button>
+        <label class="btn" for="importFile" style="cursor:pointer;">Importar JSON</label>
+        <input class="hidden" type="file" id="importFile" accept=".json" onchange="importData(event)">
+        <br><br><hr><br>
+        <button class="btn danger" onclick="clearData()">Borrar datos guardados</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL PRINCIPAL -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="modalTitle" style="margin:0; font-family:Georgia, serif; color:var(--wine);">Formulario</h2>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+
+const DB_KEY = 'penaPepeCRM_v3';
+let data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
+let currentRole = 'admin';
+let editId = null;
+let currentFormType = '';
+let sponsorView = 'kanban';
+
+const SPONSOR_STAGES = ['Prospecto', 'Contactado', 'Propuesta enviada', 'Confirmado', 'No concretado'];
+
+function init() {
+  loadData();
+  checkExpiredOpps();
+  renderAll();
+}
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(DB_KEY);
+    if (saved) {
+      data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [], ...JSON.parse(saved) };
+    }
+  } catch(e){}
+}
+
+function saveData() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch(e){}
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const money = n => new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 }).format(Number(n)||0);
+const uid = () => Date.now() + Math.floor(Math.random() * 1000);
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+function checkExpiredOpps() {
+  const today = new Date().toISOString().slice(0, 10);
+  data.opps.forEach(o => {
+    if (o.deadline && o.deadline < today) o.status = 'Cerrada';
+  });
+}
+
+function tab(tabName) {
+  document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+  $(tabName).classList.remove('hidden');
+  document.querySelectorAll('.sidebar-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+
+  if (tabName === 'home') renderHome();
+  if (tabName === 'events') renderEvents();
+  if (tabName === 'content') renderContentList();
+  if (tabName === 'sponsors') renderSponsors();
+  if (tabName === 'singers') renderSingers();
+  if (tabName === 'opportunities') renderOpps();
+  if (tabName === 'finance') renderFinances();
+  if (tabName === 'comms') renderComms();
+}
+
+/* REGISTROS Y FORMULARIOS */
+function openNewRecordSelector() {
+  const html = `
+    <p>Elegí la categoría de registro:</p>
+    <div class="selector-grid">
+      <div class="selector-card" onclick="closeModal(); openForm('event');">
+        <h3>📅 Evento</h3>
+        <p>Planificar nueva fecha de peña o festival.</p>
+      </div>
+      <div class="selector-card" onclick="closeModal(); openForm('content');">
+        <h3>📱 Contenido</h3>
+        <p>Publicación para redes sociales.</p>
+      </div>
+      <div class="selector-card" onclick="closeModal(); openForm('sponsor');">
+        <h3>🏢 Sponsor</h3>
+        <p>Marca o acuerdo comercial.</p>
+      </div>
+      <div class="selector-card" onclick="closeModal(); openForm('finance');">
+        <h3>💰 Finanza Extra</h3>
+        <p>Ingreso o egreso no habitual.</p>
+      </div>
+    </div>
+  `;
+  openCustomModal('Nuevo Registro', html);
+}
+
+function openForm(type, id = null) {
+  currentFormType = type;
+  editId = id;
+  const rec = id ? ((data[type + 's'] || data[type] || []).find(x => x.id === id) || {}) : {};
+
+  let fields = '';
+  let title = id ? 'Editar Registro' : 'Nuevo Registro';
+
+  if (type === 'event') {
+    title = 'Planificar Evento';
+    fields = `
+      <div class="field full">
+        <label>Nombre / Título del Evento *</label>
+        <input name="title" value="${esc(rec.title || '')}" required>
+      </div>
+      <div class="field">
+        <label>Fecha del Evento *</label>
+        <input type="date" name="date" value="${rec.date || ''}" required>
+      </div>
+      <div class="field">
+        <label>Lugar / Sede</label>
+        <input name="place" value="${esc(rec.place || '')}">
+      </div>
+      <div class="field full">
+        <label>Lista de Actividades / Grilla de Artistas</label>
+        <textarea name="activities" placeholder="12:00 - Apertura\n13:30 - Cantor invitado...">${esc(rec.activities || '')}</textarea>
+      </div>
+    `;
+  } else if (type === 'content') {
+    title = 'Programar Publicación de Redes';
+    fields = `
+      <div class="field full">
+        <label>Título / Idea de la Publicación *</label>
+        <input name="title" value="${esc(rec.title || '')}" required>
+      </div>
+      <div class="field">
+        <label>Red Social / Plataforma</label>
+        <select name="platform">
+          <option value="Instagram" ${rec.platform === 'Instagram' ? 'selected' : ''}>Instagram</option>
+          <option value="Facebook" ${rec.platform === 'Facebook' ? 'selected' : ''}>Facebook</option>
+          <option value="TikTok" ${rec.platform === 'TikTok' ? 'selected' : ''}>TikTok</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Estado de Producción</label>
+        <select name="status">
+          <option value="Pauta" ${rec.status === 'Pauta' ? 'selected' : ''}>Pauta / Idea</option>
+          <option value="Producción" ${rec.status === 'Producción' ? 'selected' : ''}>En producción</option>
+          <option value="Listo" ${rec.status === 'Listo' ? 'selected' : ''}>Listo para publicar</option>
+          <option value="Publicado" ${rec.status === 'Publicado' ? 'selected' : ''}>Publicado</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Fecha Programada</label>
+        <input type="date" name="pubDate" value="${rec.pubDate || ''}">
+      </div>
+      <div class="field full">
+        <label>Texto / Copy de la publicación</label>
+        <textarea name="copy">${esc(rec.copy || '')}</textarea>
+      </div>
+    `;
+  } else if (type === 'finance') {
+    title = 'Movimiento Financiero Extra';
+    fields = `
+      <div class="field full">
+        <label>Concepto / Descripción *</label>
+        <input name="concept" value="${esc(rec.concept || '')}" required>
+      </div>
+      <div class="field">
+        <label>Tipo de Movimiento</label>
+        <select name="type">
+          <option value="Ingreso" ${rec.type === 'Ingreso' ? 'selected' : ''}>Ingreso (+)</option>
+          <option value="Egreso" ${rec.type === 'Egreso' ? 'selected' : ''}>Egreso (-)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monto (UYU) *</label>
+        <input type="number" name="amount" value="${rec.amount || ''}" required>
+      </div>
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" name="date" value="${rec.date || new Date().toISOString().slice(0, 10)}">
+      </div>
+    `;
+  } else if (type === 'sponsor') {
+    title = 'Sponsor Commercial';
+    fields = `
+      <div class="field full"><label>Empresa *</label><input name="name" value="${esc(rec.name||'')}" required></div>
+      <div class="field"><label>Categoría</label><select name="category"><option value="" ${!rec.category?'selected':''}>Sin definir</option><option value="Principal" ${rec.category==='Principal'?'selected':''}>Principal</option><option value="Apoyo" ${rec.category==='Apoyo'?'selected':''}>Apoyo</option></select><span class="field-note">se define al conversar la propuesta</span></div>
+      <div class="field"><label>Estado</label><select name="status">${SPONSOR_STAGES.map(s=>`<option value="${s}" ${rec.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>Contacto</label><input name="contact" value="${esc(rec.contact||'')}"></div>
+      <div class="field"><label>Importe (UYU)</label><input type="number" name="amount" value="${rec.amount||0}"></div>
+      <div class="field"><label>Cobrado (UYU)</label><input type="number" name="paid" value="${rec.paid||0}"></div>
+      <div class="field"><label>Próx. Fecha Acción</label><input type="date" name="nextDate" value="${rec.nextDate||''}"></div>
+    `;
+  } else if (type === 'singer') {
+    title = 'Ficha de Cantor';
+    fields = `
+      <div class="field full"><label>Nombre Completo / Artístico *</label><input name="name" value="${esc(rec.name||'')}" required></div>
+      <div class="field"><label>Formato</label><select name="format"><option>Solista</option><option>Duo</option><option>Grupo</option><option>Músico</option></select></div>
+      <div class="field"><label>Documento de Identidad</label><input name="doc" value="${esc(rec.doc||'')}"><span class="field-note">sólo será útil para facilitar accesos a eventos o proyectos culturales</span></div>
+      <div class="field"><label>Teléfono</label><input name="phone" value="${esc(rec.phone||'')}"></div>
+      <div class="field"><label>Punto de partida habitual</label><input name="origin" value="${esc(rec.origin||'')}" placeholder="Ciudad / localidad de base"><span class="field-note">para estimar costos de traslado</span></div>
+      <div class="field"><label>Caché Peña (Mín)</label><input type="number" name="feePePena" value="${rec.feePePena||''}"></div>
+      <div class="field"><label>Caché Festival (Máx)</label><input type="number" name="feeFestival" value="${rec.feeFestival||''}"></div>
+    `;
+  } else if (type === 'opportunity') {
+    title = 'Convocatoria / Oportunidad';
+    fields = `
+      <div class="field full"><label>Evento / Convocatoria *</label><input name="title" value="${esc(rec.title||'')}" required></div>
+      <div class="field"><label>Fecha del Evento</label><input type="date" name="eventDate" value="${rec.eventDate||''}"></div>
+      <div class="field"><label>Lugar</label><input name="place" value="${esc(rec.place||'')}" placeholder="Ciudad / sede"></div>
+      <div class="field"><label>Organizador</label><input name="organizer" value="${esc(rec.organizer||'')}"></div>
+      <div class="field"><label>Fecha límite para postular *</label><input type="date" name="deadline" value="${rec.deadline||''}" required></div>
+      <div class="field full"><label>Detalles a considerar por el artista</label><textarea name="details" placeholder="Caché, hospedaje, requisitos técnicos...">${esc(rec.details||'')}</textarea></div>
+    `;
+  }
+
+  if (type === 'campaign') {
+    title = 'Campaña de Comunicación';
+    fields = `
+      <div class="field full"><label>Nombre de la campaña *</label><input name="title" value="${esc(rec.title||'')}" required></div>
+      <div class="field"><label>Canal</label><select name="channel">
+        <option value="WhatsApp" ${rec.channel==='WhatsApp'?'selected':''}>WhatsApp</option>
+        <option value="Email" ${rec.channel==='Email'?'selected':''}>Email</option>
+        <option value="Instagram" ${rec.channel==='Instagram'?'selected':''}>Instagram</option>
+        <option value="General" ${rec.channel==='General'?'selected':''}>General</option>
+      </select></div>
+      <div class="field"><label>Fecha de envío</label><input type="date" name="date" value="${rec.date||''}"></div>
+      <div class="field full"><label>Público destinatario</label><input name="audience" value="${esc(rec.audience||'')}" placeholder="Ej: Sponsors confirmados, todos los cantores..."></div>
+      <div class="field full"><label>Mensaje</label><textarea name="message" placeholder="Texto del mensaje masivo...">${esc(rec.message||'')}</textarea></div>
+    `;
+  }
+
+  const html = `
+    <form onsubmit="saveFormSubmit(event, '${type}')">
+      <div class="form-grid">${fields}</div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button>
+      </div>
+    </form>
+  `;
+  openCustomModal(title, html);
+}
+
+function saveFormSubmit(e, type) {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const obj = {};
+  formData.forEach((v, k) => obj[k] = v);
+
+  let targetKey = type + 's';
+  if (type === 'content') targetKey = 'content';
+  if (type === 'finance') targetKey = 'finances';
+
+  if (!data[targetKey]) data[targetKey] = [];
+
+  if (editId) {
+    const idx = data[targetKey].findIndex(x => x.id === editId);
+    if (idx !== -1) data[targetKey][idx] = { ...data[targetKey][idx], ...obj };
+  } else {
+    const newRec = { id: uid(), ...obj };
+    if (type === 'sponsor') newRec.history = [];
+    data[targetKey].unshift(newRec);
+  }
+
+  saveData();
+  closeModal();
+  renderAll();
+  toast('Registro guardado');
+}
+
+/* RENDERS DE MÓDULOS */
+function renderHome() {
+  // Finanzas netas
+  const sponsorPending = data.sponsors.reduce((acc, curr) => acc + Math.max(0, (Number(curr.amount)||0) - (Number(curr.paid)||0)), 0);
+  const extraNet = data.finances.reduce((acc, curr) => acc + (curr.type === 'Ingreso' ? Number(curr.amount) : -Number(curr.amount)), 0);
+
+  $('sponsorsPending').textContent = money(sponsorPending);
+  $('extraNet').textContent = money(extraNet);$('balanceNet').textContent = money(sponsorPending + extraNet);
+
+  // Próximo evento
+  const upcomingEvents = data.events.filter(e => e.date >= new Date().toISOString().slice(0, 10)).sort((a,b) => a.date.localeCompare(b.date));
+  if (upcomingEvents.length) {
+    $('nextEventTitle').textContent = upcomingEvents[0].title;
+    $('nextEventMeta').textContent = `📅 Fecha: ${upcomingEvents[0].date} | 📍 ${upcomingEvents[0].place || 'Sede a confirmar'}`;
+  }
+
+  // Tareas de Contenidos
+  const pendingContent = data.content.filter(c => c.status !== 'Publicado').slice(0, 5);
+  $('homeContentTasks').innerHTML = pendingContent.length ? pendingContent.map(c => `
+    <div class="record" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <b>${esc(c.title)}</b> (${esc(c.platform)})
+        <div style="font-size:11px; color:var(--muted);">Fecha prevista: ${esc(c.pubDate || 'Sin fecha')}</div>
+      </div>
+      <span class="pill blue">${esc(c.status)}</span>
+    </div>
+  `).join('') : '<div class="empty">No hay publicaciones pendientes programadas.</div>';
+}
+
+function renderEvents() {
+  const container = $('eventsList');
+  container.innerHTML = data.events.length ? data.events.map(e => `
+    <div class="panel" style="cursor:pointer;" onclick="openForm('event', ${e.id})" title="Clic para editar">
+      <div style="display:flex; justify-content:space-between;">
+        <h3 style="margin:0; color:var(--wine);">${esc(e.title)}</h3>
+        <span class="pill green">📅 ${esc(e.date)}</span>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin:4px 0;">📍 ${esc(e.place || 'Sede sin especificar')}</p>
+      <div style="background:#faf7f2; padding:10px; border-radius:6px; margin-top:8px; white-space:pre-wrap; font-size:12px;"><b>Planificación / Grilla:</b>\n${esc(e.activities || 'Sin actividades detalladas')}</div>
+    </div>
+  `).join('') : '<div class="empty">No hay eventos planificados.</div>';
+}
+
+function renderContentList() {
+  const container = $('contentList');
+  container.innerHTML = data.content.length ? data.content.map(c => `
+    <div class="record" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="openForm('content', ${c.id})" title="Clic para editar">
+      <div>
+        <h4 style="margin:0; color:var(--wine);">${esc(c.title)}</h4>
+        <div style="font-size:12px; color:var(--muted);">Plataforma: <b>${esc(c.platform)}</b> | Fecha: ${esc(c.pubDate || 'Sin fecha')}</div>
+        <p style="margin:4px 0 0; font-size:12px;">${esc(c.copy || '')}</p>
+      </div>
+      <span class="pill blue">${esc(c.status)}</span>
+    </div>
+  `).join('') : '<div class="empty">No hay contenidos en el cronograma.</div>';
+}
+
+function sponsorFilters() {
+  const q = (($('sSearch') || {}).value || '').toLowerCase();
+  const cat = ($('sCatFilter') || {}).value || '';
+  return data.sponsors.filter(s => {
+    const matchQ = !q || (s.name || '').toLowerCase().includes(q) || (s.contact || '').toLowerCase().includes(q);
+    let matchCat = true;
+    if (cat === '__none__') matchCat = !(s.category || '');
+    else if (cat) matchCat = (s.category || '') === cat;
+    return matchQ && matchCat;
+  });
+}
+
+function renderSponsors() {
+  const list = sponsorFilters();
+  $('sponsorKanbanView').innerHTML = SPONSOR_STAGES.map(stage => {
+    const colItems = list.filter(s => (s.status || 'Prospecto') === stage);
+    return `
+      <div class="kanban-col">
+        <div class="kanban-col-head">
+          <h3>${stage}</h3>
+          <span>${colItems.length}</span>
+        </div>
+        <div class="kanban-cards">
+          ${colItems.map(s => `
+            <div class="kanban-card" style="cursor:pointer;" onclick="openSponsorDetail(${s.id})" title="Clic para ver ficha">
+              <b>${esc(s.name)}</b>
+              <div style="font-size:11px; color:var(--muted);">${esc(s.category || 'Sin categoría')} · ${esc(s.contact || 'sin contacto')}</div>
+              <div style="font-size:11px; color:var(--muted);">Importe: ${money(s.amount)} · Cobrado: ${money(s.paid)}</div>
+              ${(s.history || []).length ? `<div style="font-size:10px; color:var(--gold); margin-top:4px;">📝 ${s.history.length} nota(s) de seguimiento</div>` : ''}
+            </div>
+          `).join('') || '<div style="font-size:11px; color:var(--muted); text-align:center; padding:8px;">—</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  $('sponsorListView').innerHTML = list.length ? `
+    <table class="table">
+      <thead><tr><th>Empresa</th><th>Categoría</th><th>Estado</th><th>Contacto</th><th>Importe</th><th>Cobrado</th><th>Pendiente</th><th>Próx. acción</th></tr></thead>
+      <tbody>
+        ${list.map(s => `
+          <tr style="cursor:pointer;" onclick="openSponsorDetail(${s.id})" title="Clic para ver ficha">
+            <td><b>${esc(s.name)}</b></td>
+            <td>${esc(s.category || 'Sin definir')}</td>
+            <td><span class="pill blue">${esc(s.status || 'Prospecto')}</span></td>
+            <td>${esc(s.contact || '—')}</td>
+            <td>${money(s.amount)}</td>
+            <td>${money(s.paid)}</td>
+            <td><b>${money(Math.max(0, (Number(s.amount)||0) - (Number(s.paid)||0)))}</b></td>
+            <td>${esc(s.nextDate || '—')}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  ` : '<div class="empty">No hay sponsors que coincidan con la búsqueda.</div>';
+}
+
+function toggleSponsorView() {
+  sponsorView = sponsorView === 'kanban' ? 'lista' : 'kanban';
+  const isKanban = sponsorView === 'kanban';
+  $('sponsorKanbanView').classList.toggle('hidden', !isKanban);
+  $('sponsorListView').classList.toggle('hidden', isKanban);
+  $('sViewToggle').textContent = isKanban ? '📋 Ver como lista' : '🗂️ Ver kanban';
+}
+
+/* FICHA DE SPONSOR + HISTORIAL DE SEGUIMIENTO */
+function openSponsorDetail(id) {
+  const s = data.sponsors.find(x => x.id === id);
+  if (!s) return;
+  const hist = (s.history || []).map(h => `
+    <div class="timeline-item">
+      <div><b>${esc(h.date)}</b>${h.who ? ' · con ' + esc(h.who) : ''}</div>
+      <div>${esc(h.note)}</div>
+    </div>`).join('');
+  const html = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+      <div>
+        <h3 style="margin:0; color:var(--wine); font-size:20px;">${esc(s.name)}</h3>
+        <div style="font-size:12px; color:var(--muted); margin-top:2px;">
+          <span class="pill blue">${esc(s.category || 'Sin categoría')}</span>
+          <span class="pill">${esc(s.status || 'Prospecto')}</span>
+        </div>
+        <div style="font-size:13px; margin-top:8px;">
+          Contacto: <b>${esc(s.contact || '—')}</b><br>
+          Importe: <b>${money(s.amount)}</b> · Cobrado: <b>${money(s.paid)}</b> · Pendiente: <b>${money(Math.max(0, (Number(s.amount)||0) - (Number(s.paid)||0)))}</b>
+          ${s.nextDate ? `<br>Próxima acción: <b>${esc(s.nextDate)}</b>` : ''}
+        </div>
+      </div>
+      <button class="btn sm" onclick="closeModal(); openForm('sponsor', ${s.id})">✏️ Editar ficha</button>
+    </div>
+    <hr style="border:0; border-top:1px solid var(--line); margin:14px 0;">
+    <h4 style="margin:0 0 8px; color:var(--wine);">📝 Historial de seguimiento</h4>
+    <div class="timeline" style="max-height:220px; overflow-y:auto; margin-bottom:12px;">
+      ${hist || '<div class="empty" style="padding:14px;">Sin notas todavía. Registrá la primera conversación abajo.</div>'}
+    </div>
+    <div class="field"><label>Nueva nota — ¿qué se habló?</label><textarea id="noteText" placeholder="Ej: Hablamos por teléfono, pidieron propuesta formal por email..."></textarea></div>
+    <div class="field"><label>¿Con quién se habló?</label><input id="noteWho" placeholder="Nombre de la persona de contacto"></div>
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="btn primary" onclick="addSponsorNote(${s.id})">💾 Guardar nota (fecha de hoy)</button>
+    </div>`;
+  openCustomModal('Ficha de Sponsor', html);
+}
+
+function addSponsorNote(id) {
+  const s = data.sponsors.find(x => x.id === id);
+  if (!s) return;
+  const note = $('noteText').value.trim();
+  const who = $('noteWho').value.trim();
+  if (!note) { toast('Escribí una nota antes de guardar'); return; }
+  if (!s.history) s.history = [];
+  s.history.unshift({ id: uid(), date: new Date().toISOString().slice(0, 10), note, who });
+  saveData();
+  renderSponsors();
+  openSponsorDetail(id);
+  toast('Nota guardada');
+}
+
+function renderSingers() {
+  const q = (($('cSearch') || {}).value || '').toLowerCase();
+  const list = data.singers.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.doc || '').toLowerCase().includes(q) || (s.origin || '').toLowerCase().includes(q));
+  $('cTable').innerHTML = list.length ? `
+    <table class="table">
+      <thead><tr><th>Cantor</th><th>Formato</th><th>Punto de partida</th><th>Documento</th><th>Teléfono</th><th>Caché Peña</th><th>Caché Festival</th></tr></thead>
+      <tbody>
+        ${list.map(s => `<tr style="cursor:pointer;" onclick="openForm('singer', ${s.id})" title="Clic para editar">
+          <td><b>${esc(s.name)}</b></td>
+          <td>${esc(s.format)}</td>
+          <td>${esc(s.origin || '—')}</td>
+          <td>${esc(s.doc || '—')}</td>
+          <td>${esc(s.phone || '—')}</td>
+          <td>${money(s.feePePena)}</td>
+          <td>${money(s.feeFestival)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  ` : '<div class="empty">No hay cantores en la base.</div>';
+}
+
+function renderOpps() {
+  $('oList').innerHTML = data.opps.length ? data.opps.map(o => `
+    <div class="record" style="cursor:pointer;" onclick="openForm('opportunity', ${o.id})" title="Clic para editar">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <b style="color:var(--wine); font-size:15px;">${esc(o.title)}</b>
+        <span class="pill ${o.status === 'Cerrada' ? 'overdue' : 'blue'}">${esc(o.status || 'Abierta')}</span>
+      </div>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+        📅 Evento: <b>${esc(o.eventDate || 'a confirmar')}</b> · 📍 ${esc(o.place || 'lugar a confirmar')} · 🏢 ${esc(o.organizer || 'organizador a confirmar')}
+      </div>
+      <div style="font-size:12px; margin-top:2px;">⏳ Límite para postular: <b>${esc(o.deadline)}</b></div>
+      ${o.details ? `<div style="background:#faf7f2; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; white-space:pre-wrap;"><b>Detalles para el artista:</b>
+${esc(o.details)}</div>` : ''}
+    </div>
+  `).join('') : '<div class="empty">Sin convocatorias abiertas.</div>';
+}
+
+function renderFinances() {
+  $('fTable').innerHTML = data.finances.length ? `
+    <table class="table">
+      <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+      <tbody>
+        ${data.finances.map(f => `
+          <tr style="cursor:pointer;" onclick="openForm('finance', ${f.id})" title="Clic para editar">
+            <td>${esc(f.date)}</td>
+            <td><b>${esc(f.concept)}</b></td>
+            <td><span class="pill ${f.type === 'Ingreso' ? 'green' : 'overdue'}">${esc(f.type)}</span></td>
+            <td><b>${money(f.amount)}</b></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  ` : '<div class="empty">No hay movimientos financieros registrados.</div>';
+}
+
+function renderCampaigns() {
+  const c = $('campaignsList');
+  if (!c) return;
+  c.innerHTML = data.campaigns.length ? data.campaigns.map(cp => `
+    <div class="record">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <div>
+          <b style="color:var(--wine); font-size:14px;">${esc(cp.title)}</b>
+          <span class="pill blue" style="margin-left:6px;">${esc(cp.channel || 'General')}</span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span style="font-size:11px; color:var(--muted);">Envío: ${esc(cp.date || 'sin fecha')}</span>
+          <button class="btn sm danger" onclick="deleteRecord('campaigns', ${cp.id})">🗑</button>
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">Destinatarios: <b>${esc(cp.audience || '—')}</b></div>
+      <div style="background:#faf7f2; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; white-space:pre-wrap;">${esc(cp.message || '')}</div>
+    </div>
+  `).join('') : '<div class="empty">No hay campañas preparadas todavía.</div>';
+}
+
+function deleteRecord(key, id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  data[key] = (data[key] || []).filter(x => x.id !== id);
+  saveData();
+  renderAll();
+  toast('Registro eliminado');
+}
+
+function renderComms() {
+  $('commsList').innerHTML = data.comms.length ? data.comms.map(c => `
+    <div class="timeline-item">
+      <div><b>${esc(c.date)}</b> - ${esc(c.sponsorName || 'Sponsor')}</div>
+      <div>${esc(c.note)}</div>
+    </div>
+  `).join('') : '<div class="empty">Historial vacío.</div>';
+}
+
+function openCustomModal(title, html) {
+  $('modalTitle').textContent = title;
+  $('modalBody').innerHTML = html;
+  $('modal').style.display = 'flex';
+}
+function closeModal() { $('modal').style.display = 'none'; }
+
+function renderAll() {
+  renderHome();
+  renderEvents();
+  renderContentList();
+  renderSponsors();
+  renderSingers();
+  renderOpps();
+  renderFinances();
+  renderCampaigns();
+  renderComms();
+}
+
+function switchUserRoleModal() {
+  const role = currentRole === 'admin' ? 'cantor' : 'admin';
+  currentRole = role;
+  if (role === 'admin') {
+    $('adminSidebar').classList.remove('hidden');
+    tab('home');
+  } else {
+    $('adminSidebar').classList.add('hidden');
+    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+    $('cantorPortal').classList.remove('hidden');
+  }
+  toast(`Modo activo: ${role}`);
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pena_pepe_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      data = { ...data, ...JSON.parse(r.result) };
+      saveData();
+      renderAll();
+      toast('Respaldo cargado correctamente');
+    } catch(err){}
+  };
+  r.readAsText(f);
+}
+
+function clearData() {
+  if (confirm('¿Borrar todos los datos localmente?')) {
+    data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
+    saveData();
+    renderAll();
+    toast('Datos eliminados');
+  }
+}
+
+window.onload = init;
+
+</script>
+</body>
+</html>
