@@ -6,18 +6,17 @@
 <title>Peña de Pepe | Gestión Comercial, Eventos y Contenidos</title>
 
 <!-- SUPABASE JS SDK -->
-<!-- SUPABASE JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // 1. Configuración de Supabase
+  // Configuración de Supabase
   const SUPABASE_URL = 'https://dlbwfdmatbuutjzynkms.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'TU_CLAVE_PUBLISHABLE_AQUI'; // Asegúrate de tener tu clave real aquí
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_IlgS31rM03sbzkwuuYHzsg_oQSS3YOo';
 
-  // 2. Inicializar cliente
+  // Inicializar cliente
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-  // 3. Función de prueba
+  // Función de prueba rápida
   async function probarConexionSupabase() {
     try {
       const { data, error } = await _supabase
@@ -35,13 +34,9 @@
     }
   }
 
-  // Ejecutar prueba
   probarConexionSupabase();
 </script>
-  
-  // Ejecutar la prueba al cargar la página
-  probarConexionSupabase();
-</script>
+
 <style>
 :root {
   --wine: #5b1825;
@@ -558,11 +553,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
 <div class="toast" id="toast"></div>
 
 <script>
-  // Inicialización de Supabase con los datos de tu proyecto
-  const SUPABASE_URL = 'https://dlbwfdmatbuutjzynkms.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_IlgS31rM03sbzkwwuYhZsg_oQSS3YOo';
-  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
   const DB_KEY = 'penaPepeCRM_v3';
   let data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
   let currentRole = 'admin';
