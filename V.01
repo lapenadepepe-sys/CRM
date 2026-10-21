@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Peña de Pepe | Gestión Comercial, Eventos y Contenidos</title>
+
+<!-- SUPABASE JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root {
   --wine: #5b1825;
@@ -254,10 +258,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
   .kanban-board { grid-template-columns: 1fr; }
 }
 </style>
-<base target="_blank">
 </head>
 <body>
-
 
 <div class="dashboard-layout">
   <!-- SIDEBAR (MENÚ PRINCIPAL) -->
@@ -295,11 +297,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
       </div>
     </header>
 
-    <!-- SECCIÓN 1: VISIÓN GENERAL (STYLE DASHBOARD) -->
+    <!-- SECCIÓN 1: VISIÓN GENERAL -->
     <section id="home">
       <div class="widgets-grid">
         <div class="widgets-left-col">
-          <!-- Widget Redes sociales / Seguidores -->
           <div class="stat-card color-box">
             <span class="card-title">Impacto Digital & Audiencia</span>
             <strong id="nFollowers">10.450</strong>
@@ -313,7 +314,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
             </div>
           </div>
 
-          <!-- Widget Finanzas unificadas -->
           <div class="stat-card paper-box">
             <span class="card-title">Balance de Cobros & Extras</span>
             <strong id="balanceNet">$ 0</strong>
@@ -327,7 +327,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
             </div>
           </div>
 
-          <!-- Widget Próximo Evento Destacado -->
           <div class="stat-card paper-box" style="grid-column: span 2;">
             <span class="card-title">Próxima Fecha de la Peña</span>
             <strong id="nextEventTitle" style="font-size:20px; color:var(--wine);">Sin eventos próximos</strong>
@@ -335,7 +334,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
           </div>
         </div>
 
-        <!-- Calendario Widget -->
         <div class="calendar-card">
           <div class="cal-head">
             <span class="cal-month">Octubre 2026</span>
@@ -353,7 +351,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
         </div>
       </div>
 
-      <!-- Tabla Resumen de Tareas & Contenidos Pendientes -->
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <h2 style="margin:0; font-size:18px; color:var(--wine);">Contenidos y Tareas para Hoy / Próximos días</h2>
@@ -407,7 +404,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
       <div id="contentList"></div>
     </section>
 
-    <!-- SECCIÓN 4: SPONSORS (KANBAN / LISTA) -->
+    <!-- SECCIÓN 4: SPONSORS -->
     <section id="sponsors" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -489,7 +486,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
       </div>
     </section>
 
-    <!-- PORTAL CANTORES (MODO VISTA RESTRICTA) -->
+    <!-- PORTAL CANTORES -->
     <section id="cantorPortal" class="hidden">
       <div class="panel" style="border-top:4px solid var(--gold);">
         <h2 style="margin:0; color:var(--wine);">Portal del Cantor / Músico</h2>
@@ -526,604 +523,603 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
 
 <div class="toast" id="toast"></div>
 
-
 <script>
+  // Inicialización de Supabase con los datos de tu proyecto
+  const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_tu_clave_copiada_aqui';
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-const DB_KEY = 'penaPepeCRM_v3';
-let data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
-let currentRole = 'admin';
-let editId = null;
-let currentFormType = '';
-let sponsorView = 'kanban';
+  const DB_KEY = 'penaPepeCRM_v3';
+  let data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
+  let currentRole = 'admin';
+  let editId = null;
+  let currentFormType = '';
+  let sponsorView = 'kanban';
 
-const SPONSOR_STAGES = ['Prospecto', 'Contactado', 'Propuesta enviada', 'Confirmado', 'No concretado'];
+  const SPONSOR_STAGES = ['Prospecto', 'Contactado', 'Propuesta enviada', 'Confirmado', 'No concretado'];
 
-function init() {
-  loadData();
-  checkExpiredOpps();
-  renderAll();
-}
-
-function loadData() {
-  try {
-    const saved = localStorage.getItem(DB_KEY);
-    if (saved) {
-      data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [], ...JSON.parse(saved) };
-    }
-  } catch(e){}
-}
-
-function saveData() {
-  try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch(e){}
-}
-
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-const money = n => new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 }).format(Number(n)||0);
-const uid = () => Date.now() + Math.floor(Math.random() * 1000);
-
-function toast(msg) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 2500);
-}
-
-function checkExpiredOpps() {
-  const today = new Date().toISOString().slice(0, 10);
-  data.opps.forEach(o => {
-    if (o.deadline && o.deadline < today) o.status = 'Cerrada';
-  });
-}
-
-function tab(tabName) {
-  document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-  $(tabName).classList.remove('hidden');
-  document.querySelectorAll('.sidebar-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
-
-  if (tabName === 'home') renderHome();
-  if (tabName === 'events') renderEvents();
-  if (tabName === 'content') renderContentList();
-  if (tabName === 'sponsors') renderSponsors();
-  if (tabName === 'singers') renderSingers();
-  if (tabName === 'opportunities') renderOpps();
-  if (tabName === 'finance') renderFinances();
-  if (tabName === 'comms') renderComms();
-}
-
-/* REGISTROS Y FORMULARIOS */
-function openNewRecordSelector() {
-  const html = `
-    <p>Elegí la categoría de registro:</p>
-    <div class="selector-grid">
-      <div class="selector-card" onclick="closeModal(); openForm('event');">
-        <h3>📅 Evento</h3>
-        <p>Planificar nueva fecha de peña o festival.</p>
-      </div>
-      <div class="selector-card" onclick="closeModal(); openForm('content');">
-        <h3>📱 Contenido</h3>
-        <p>Publicación para redes sociales.</p>
-      </div>
-      <div class="selector-card" onclick="closeModal(); openForm('sponsor');">
-        <h3>🏢 Sponsor</h3>
-        <p>Marca o acuerdo comercial.</p>
-      </div>
-      <div class="selector-card" onclick="closeModal(); openForm('finance');">
-        <h3>💰 Finanza Extra</h3>
-        <p>Ingreso o egreso no habitual.</p>
-      </div>
-    </div>
-  `;
-  openCustomModal('Nuevo Registro', html);
-}
-
-function openForm(type, id = null) {
-  currentFormType = type;
-  editId = id;
-  const rec = id ? ((data[type + 's'] || data[type] || []).find(x => x.id === id) || {}) : {};
-
-  let fields = '';
-  let title = id ? 'Editar Registro' : 'Nuevo Registro';
-
-  if (type === 'event') {
-    title = 'Planificar Evento';
-    fields = `
-      <div class="field full">
-        <label>Nombre / Título del Evento *</label>
-        <input name="title" value="${esc(rec.title || '')}" required>
-      </div>
-      <div class="field">
-        <label>Fecha del Evento *</label>
-        <input type="date" name="date" value="${rec.date || ''}" required>
-      </div>
-      <div class="field">
-        <label>Lugar / Sede</label>
-        <input name="place" value="${esc(rec.place || '')}">
-      </div>
-      <div class="field full">
-        <label>Lista de Actividades / Grilla de Artistas</label>
-        <textarea name="activities" placeholder="12:00 - Apertura\n13:30 - Cantor invitado...">${esc(rec.activities || '')}</textarea>
-      </div>
-    `;
-  } else if (type === 'content') {
-    title = 'Programar Publicación de Redes';
-    fields = `
-      <div class="field full">
-        <label>Título / Idea de la Publicación *</label>
-        <input name="title" value="${esc(rec.title || '')}" required>
-      </div>
-      <div class="field">
-        <label>Red Social / Plataforma</label>
-        <select name="platform">
-          <option value="Instagram" ${rec.platform === 'Instagram' ? 'selected' : ''}>Instagram</option>
-          <option value="Facebook" ${rec.platform === 'Facebook' ? 'selected' : ''}>Facebook</option>
-          <option value="TikTok" ${rec.platform === 'TikTok' ? 'selected' : ''}>TikTok</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Estado de Producción</label>
-        <select name="status">
-          <option value="Pauta" ${rec.status === 'Pauta' ? 'selected' : ''}>Pauta / Idea</option>
-          <option value="Producción" ${rec.status === 'Producción' ? 'selected' : ''}>En producción</option>
-          <option value="Listo" ${rec.status === 'Listo' ? 'selected' : ''}>Listo para publicar</option>
-          <option value="Publicado" ${rec.status === 'Publicado' ? 'selected' : ''}>Publicado</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Fecha Programada</label>
-        <input type="date" name="pubDate" value="${rec.pubDate || ''}">
-      </div>
-      <div class="field full">
-        <label>Texto / Copy de la publicación</label>
-        <textarea name="copy">${esc(rec.copy || '')}</textarea>
-      </div>
-    `;
-  } else if (type === 'finance') {
-    title = 'Movimiento Financiero Extra';
-    fields = `
-      <div class="field full">
-        <label>Concepto / Descripción *</label>
-        <input name="concept" value="${esc(rec.concept || '')}" required>
-      </div>
-      <div class="field">
-        <label>Tipo de Movimiento</label>
-        <select name="type">
-          <option value="Ingreso" ${rec.type === 'Ingreso' ? 'selected' : ''}>Ingreso (+)</option>
-          <option value="Egreso" ${rec.type === 'Egreso' ? 'selected' : ''}>Egreso (-)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Monto (UYU) *</label>
-        <input type="number" name="amount" value="${rec.amount || ''}" required>
-      </div>
-      <div class="field">
-        <label>Fecha</label>
-        <input type="date" name="date" value="${rec.date || new Date().toISOString().slice(0, 10)}">
-      </div>
-    `;
-  } else if (type === 'sponsor') {
-    title = 'Sponsor Commercial';
-    fields = `
-      <div class="field full"><label>Empresa *</label><input name="name" value="${esc(rec.name||'')}" required></div>
-      <div class="field"><label>Categoría</label><select name="category"><option value="" ${!rec.category?'selected':''}>Sin definir</option><option value="Principal" ${rec.category==='Principal'?'selected':''}>Principal</option><option value="Apoyo" ${rec.category==='Apoyo'?'selected':''}>Apoyo</option></select><span class="field-note">se define al conversar la propuesta</span></div>
-      <div class="field"><label>Estado</label><select name="status">${SPONSOR_STAGES.map(s=>`<option value="${s}" ${rec.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
-      <div class="field"><label>Contacto</label><input name="contact" value="${esc(rec.contact||'')}"></div>
-      <div class="field"><label>Importe (UYU)</label><input type="number" name="amount" value="${rec.amount||0}"></div>
-      <div class="field"><label>Cobrado (UYU)</label><input type="number" name="paid" value="${rec.paid||0}"></div>
-      <div class="field"><label>Próx. Fecha Acción</label><input type="date" name="nextDate" value="${rec.nextDate||''}"></div>
-    `;
-  } else if (type === 'singer') {
-    title = 'Ficha de Cantor';
-    fields = `
-      <div class="field full"><label>Nombre Completo / Artístico *</label><input name="name" value="${esc(rec.name||'')}" required></div>
-      <div class="field"><label>Formato</label><select name="format"><option>Solista</option><option>Duo</option><option>Grupo</option><option>Músico</option></select></div>
-      <div class="field"><label>Documento de Identidad</label><input name="doc" value="${esc(rec.doc||'')}"><span class="field-note">sólo será útil para facilitar accesos a eventos o proyectos culturales</span></div>
-      <div class="field"><label>Teléfono</label><input name="phone" value="${esc(rec.phone||'')}"></div>
-      <div class="field"><label>Punto de partida habitual</label><input name="origin" value="${esc(rec.origin||'')}" placeholder="Ciudad / localidad de base"><span class="field-note">para estimar costos de traslado</span></div>
-      <div class="field"><label>Caché Peña (Mín)</label><input type="number" name="feePePena" value="${rec.feePePena||''}"></div>
-      <div class="field"><label>Caché Festival (Máx)</label><input type="number" name="feeFestival" value="${rec.feeFestival||''}"></div>
-    `;
-  } else if (type === 'opportunity') {
-    title = 'Convocatoria / Oportunidad';
-    fields = `
-      <div class="field full"><label>Evento / Convocatoria *</label><input name="title" value="${esc(rec.title||'')}" required></div>
-      <div class="field"><label>Fecha del Evento</label><input type="date" name="eventDate" value="${rec.eventDate||''}"></div>
-      <div class="field"><label>Lugar</label><input name="place" value="${esc(rec.place||'')}" placeholder="Ciudad / sede"></div>
-      <div class="field"><label>Organizador</label><input name="organizer" value="${esc(rec.organizer||'')}"></div>
-      <div class="field"><label>Fecha límite para postular *</label><input type="date" name="deadline" value="${rec.deadline||''}" required></div>
-      <div class="field full"><label>Detalles a considerar por el artista</label><textarea name="details" placeholder="Caché, hospedaje, requisitos técnicos...">${esc(rec.details||'')}</textarea></div>
-    `;
+  function init() {
+    loadData();
+    checkExpiredOpps();
+    renderAll();
   }
 
-  if (type === 'campaign') {
-    title = 'Campaña de Comunicación';
-    fields = `
-      <div class="field full"><label>Nombre de la campaña *</label><input name="title" value="${esc(rec.title||'')}" required></div>
-      <div class="field"><label>Canal</label><select name="channel">
-        <option value="WhatsApp" ${rec.channel==='WhatsApp'?'selected':''}>WhatsApp</option>
-        <option value="Email" ${rec.channel==='Email'?'selected':''}>Email</option>
-        <option value="Instagram" ${rec.channel==='Instagram'?'selected':''}>Instagram</option>
-        <option value="General" ${rec.channel==='General'?'selected':''}>General</option>
-      </select></div>
-      <div class="field"><label>Fecha de envío</label><input type="date" name="date" value="${rec.date||''}"></div>
-      <div class="field full"><label>Público destinatario</label><input name="audience" value="${esc(rec.audience||'')}" placeholder="Ej: Sponsors confirmados, todos los cantores..."></div>
-      <div class="field full"><label>Mensaje</label><textarea name="message" placeholder="Texto del mensaje masivo...">${esc(rec.message||'')}</textarea></div>
-    `;
-  }
-
-  const html = `
-    <form onsubmit="saveFormSubmit(event, '${type}')">
-      <div class="form-grid">${fields}</div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
-        <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn primary">Guardar</button>
-      </div>
-    </form>
-  `;
-  openCustomModal(title, html);
-}
-
-function saveFormSubmit(e, type) {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const obj = {};
-  formData.forEach((v, k) => obj[k] = v);
-
-  let targetKey = type + 's';
-  if (type === 'content') targetKey = 'content';
-  if (type === 'finance') targetKey = 'finances';
-
-  if (!data[targetKey]) data[targetKey] = [];
-
-  if (editId) {
-    const idx = data[targetKey].findIndex(x => x.id === editId);
-    if (idx !== -1) data[targetKey][idx] = { ...data[targetKey][idx], ...obj };
-  } else {
-    const newRec = { id: uid(), ...obj };
-    if (type === 'sponsor') newRec.history = [];
-    data[targetKey].unshift(newRec);
-  }
-
-  saveData();
-  closeModal();
-  renderAll();
-  toast('Registro guardado');
-}
-
-/* RENDERS DE MÓDULOS */
-function renderHome() {
-  // Finanzas netas
-  const sponsorPending = data.sponsors.reduce((acc, curr) => acc + Math.max(0, (Number(curr.amount)||0) - (Number(curr.paid)||0)), 0);
-  const extraNet = data.finances.reduce((acc, curr) => acc + (curr.type === 'Ingreso' ? Number(curr.amount) : -Number(curr.amount)), 0);
-
-  $('sponsorsPending').textContent = money(sponsorPending);
-  $('extraNet').textContent = money(extraNet);$('balanceNet').textContent = money(sponsorPending + extraNet);
-
-  // Próximo evento
-  const upcomingEvents = data.events.filter(e => e.date >= new Date().toISOString().slice(0, 10)).sort((a,b) => a.date.localeCompare(b.date));
-  if (upcomingEvents.length) {
-    $('nextEventTitle').textContent = upcomingEvents[0].title;
-    $('nextEventMeta').textContent = `📅 Fecha: ${upcomingEvents[0].date} | 📍 ${upcomingEvents[0].place || 'Sede a confirmar'}`;
-  }
-
-  // Tareas de Contenidos
-  const pendingContent = data.content.filter(c => c.status !== 'Publicado').slice(0, 5);
-  $('homeContentTasks').innerHTML = pendingContent.length ? pendingContent.map(c => `
-    <div class="record" style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <b>${esc(c.title)}</b> (${esc(c.platform)})
-        <div style="font-size:11px; color:var(--muted);">Fecha prevista: ${esc(c.pubDate || 'Sin fecha')}</div>
-      </div>
-      <span class="pill blue">${esc(c.status)}</span>
-    </div>
-  `).join('') : '<div class="empty">No hay publicaciones pendientes programadas.</div>';
-}
-
-function renderEvents() {
-  const container = $('eventsList');
-  container.innerHTML = data.events.length ? data.events.map(e => `
-    <div class="panel" style="cursor:pointer;" onclick="openForm('event', ${e.id})" title="Clic para editar">
-      <div style="display:flex; justify-content:space-between;">
-        <h3 style="margin:0; color:var(--wine);">${esc(e.title)}</h3>
-        <span class="pill green">📅 ${esc(e.date)}</span>
-      </div>
-      <p style="font-size:12px; color:var(--muted); margin:4px 0;">📍 ${esc(e.place || 'Sede sin especificar')}</p>
-      <div style="background:#faf7f2; padding:10px; border-radius:6px; margin-top:8px; white-space:pre-wrap; font-size:12px;"><b>Planificación / Grilla:</b>\n${esc(e.activities || 'Sin actividades detalladas')}</div>
-    </div>
-  `).join('') : '<div class="empty">No hay eventos planificados.</div>';
-}
-
-function renderContentList() {
-  const container = $('contentList');
-  container.innerHTML = data.content.length ? data.content.map(c => `
-    <div class="record" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="openForm('content', ${c.id})" title="Clic para editar">
-      <div>
-        <h4 style="margin:0; color:var(--wine);">${esc(c.title)}</h4>
-        <div style="font-size:12px; color:var(--muted);">Plataforma: <b>${esc(c.platform)}</b> | Fecha: ${esc(c.pubDate || 'Sin fecha')}</div>
-        <p style="margin:4px 0 0; font-size:12px;">${esc(c.copy || '')}</p>
-      </div>
-      <span class="pill blue">${esc(c.status)}</span>
-    </div>
-  `).join('') : '<div class="empty">No hay contenidos en el cronograma.</div>';
-}
-
-function sponsorFilters() {
-  const q = (($('sSearch') || {}).value || '').toLowerCase();
-  const cat = ($('sCatFilter') || {}).value || '';
-  return data.sponsors.filter(s => {
-    const matchQ = !q || (s.name || '').toLowerCase().includes(q) || (s.contact || '').toLowerCase().includes(q);
-    let matchCat = true;
-    if (cat === '__none__') matchCat = !(s.category || '');
-    else if (cat) matchCat = (s.category || '') === cat;
-    return matchQ && matchCat;
-  });
-}
-
-function renderSponsors() {
-  const list = sponsorFilters();
-  $('sponsorKanbanView').innerHTML = SPONSOR_STAGES.map(stage => {
-    const colItems = list.filter(s => (s.status || 'Prospecto') === stage);
-    return `
-      <div class="kanban-col">
-        <div class="kanban-col-head">
-          <h3>${stage}</h3>
-          <span>${colItems.length}</span>
-        </div>
-        <div class="kanban-cards">
-          ${colItems.map(s => `
-            <div class="kanban-card" style="cursor:pointer;" onclick="openSponsorDetail(${s.id})" title="Clic para ver ficha">
-              <b>${esc(s.name)}</b>
-              <div style="font-size:11px; color:var(--muted);">${esc(s.category || 'Sin categoría')} · ${esc(s.contact || 'sin contacto')}</div>
-              <div style="font-size:11px; color:var(--muted);">Importe: ${money(s.amount)} · Cobrado: ${money(s.paid)}</div>
-              ${(s.history || []).length ? `<div style="font-size:10px; color:var(--gold); margin-top:4px;">📝 ${s.history.length} nota(s) de seguimiento</div>` : ''}
-            </div>
-          `).join('') || '<div style="font-size:11px; color:var(--muted); text-align:center; padding:8px;">—</div>'}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  $('sponsorListView').innerHTML = list.length ? `
-    <table class="table">
-      <thead><tr><th>Empresa</th><th>Categoría</th><th>Estado</th><th>Contacto</th><th>Importe</th><th>Cobrado</th><th>Pendiente</th><th>Próx. acción</th></tr></thead>
-      <tbody>
-        ${list.map(s => `
-          <tr style="cursor:pointer;" onclick="openSponsorDetail(${s.id})" title="Clic para ver ficha">
-            <td><b>${esc(s.name)}</b></td>
-            <td>${esc(s.category || 'Sin definir')}</td>
-            <td><span class="pill blue">${esc(s.status || 'Prospecto')}</span></td>
-            <td>${esc(s.contact || '—')}</td>
-            <td>${money(s.amount)}</td>
-            <td>${money(s.paid)}</td>
-            <td><b>${money(Math.max(0, (Number(s.amount)||0) - (Number(s.paid)||0)))}</b></td>
-            <td>${esc(s.nextDate || '—')}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
-  ` : '<div class="empty">No hay sponsors que coincidan con la búsqueda.</div>';
-}
-
-function toggleSponsorView() {
-  sponsorView = sponsorView === 'kanban' ? 'lista' : 'kanban';
-  const isKanban = sponsorView === 'kanban';
-  $('sponsorKanbanView').classList.toggle('hidden', !isKanban);
-  $('sponsorListView').classList.toggle('hidden', isKanban);
-  $('sViewToggle').textContent = isKanban ? '📋 Ver como lista' : '🗂️ Ver kanban';
-}
-
-/* FICHA DE SPONSOR + HISTORIAL DE SEGUIMIENTO */
-function openSponsorDetail(id) {
-  const s = data.sponsors.find(x => x.id === id);
-  if (!s) return;
-  const hist = (s.history || []).map(h => `
-    <div class="timeline-item">
-      <div><b>${esc(h.date)}</b>${h.who ? ' · con ' + esc(h.who) : ''}</div>
-      <div>${esc(h.note)}</div>
-    </div>`).join('');
-  const html = `
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-      <div>
-        <h3 style="margin:0; color:var(--wine); font-size:20px;">${esc(s.name)}</h3>
-        <div style="font-size:12px; color:var(--muted); margin-top:2px;">
-          <span class="pill blue">${esc(s.category || 'Sin categoría')}</span>
-          <span class="pill">${esc(s.status || 'Prospecto')}</span>
-        </div>
-        <div style="font-size:13px; margin-top:8px;">
-          Contacto: <b>${esc(s.contact || '—')}</b><br>
-          Importe: <b>${money(s.amount)}</b> · Cobrado: <b>${money(s.paid)}</b> · Pendiente: <b>${money(Math.max(0, (Number(s.amount)||0) - (Number(s.paid)||0)))}</b>
-          ${s.nextDate ? `<br>Próxima acción: <b>${esc(s.nextDate)}</b>` : ''}
-        </div>
-      </div>
-      <button class="btn sm" onclick="closeModal(); openForm('sponsor', ${s.id})">✏️ Editar ficha</button>
-    </div>
-    <hr style="border:0; border-top:1px solid var(--line); margin:14px 0;">
-    <h4 style="margin:0 0 8px; color:var(--wine);">📝 Historial de seguimiento</h4>
-    <div class="timeline" style="max-height:220px; overflow-y:auto; margin-bottom:12px;">
-      ${hist || '<div class="empty" style="padding:14px;">Sin notas todavía. Registrá la primera conversación abajo.</div>'}
-    </div>
-    <div class="field"><label>Nueva nota — ¿qué se habló?</label><textarea id="noteText" placeholder="Ej: Hablamos por teléfono, pidieron propuesta formal por email..."></textarea></div>
-    <div class="field"><label>¿Con quién se habló?</label><input id="noteWho" placeholder="Nombre de la persona de contacto"></div>
-    <div style="display:flex; justify-content:flex-end;">
-      <button class="btn primary" onclick="addSponsorNote(${s.id})">💾 Guardar nota (fecha de hoy)</button>
-    </div>`;
-  openCustomModal('Ficha de Sponsor', html);
-}
-
-function addSponsorNote(id) {
-  const s = data.sponsors.find(x => x.id === id);
-  if (!s) return;
-  const note = $('noteText').value.trim();
-  const who = $('noteWho').value.trim();
-  if (!note) { toast('Escribí una nota antes de guardar'); return; }
-  if (!s.history) s.history = [];
-  s.history.unshift({ id: uid(), date: new Date().toISOString().slice(0, 10), note, who });
-  saveData();
-  renderSponsors();
-  openSponsorDetail(id);
-  toast('Nota guardada');
-}
-
-function renderSingers() {
-  const q = (($('cSearch') || {}).value || '').toLowerCase();
-  const list = data.singers.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.doc || '').toLowerCase().includes(q) || (s.origin || '').toLowerCase().includes(q));
-  $('cTable').innerHTML = list.length ? `
-    <table class="table">
-      <thead><tr><th>Cantor</th><th>Formato</th><th>Punto de partida</th><th>Documento</th><th>Teléfono</th><th>Caché Peña</th><th>Caché Festival</th></tr></thead>
-      <tbody>
-        ${list.map(s => `<tr style="cursor:pointer;" onclick="openForm('singer', ${s.id})" title="Clic para editar">
-          <td><b>${esc(s.name)}</b></td>
-          <td>${esc(s.format)}</td>
-          <td>${esc(s.origin || '—')}</td>
-          <td>${esc(s.doc || '—')}</td>
-          <td>${esc(s.phone || '—')}</td>
-          <td>${money(s.feePePena)}</td>
-          <td>${money(s.feeFestival)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  ` : '<div class="empty">No hay cantores en la base.</div>';
-}
-
-function renderOpps() {
-  $('oList').innerHTML = data.opps.length ? data.opps.map(o => `
-    <div class="record" style="cursor:pointer;" onclick="openForm('opportunity', ${o.id})" title="Clic para editar">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-        <b style="color:var(--wine); font-size:15px;">${esc(o.title)}</b>
-        <span class="pill ${o.status === 'Cerrada' ? 'overdue' : 'blue'}">${esc(o.status || 'Abierta')}</span>
-      </div>
-      <div style="font-size:12px; color:var(--muted); margin-top:4px;">
-        📅 Evento: <b>${esc(o.eventDate || 'a confirmar')}</b> · 📍 ${esc(o.place || 'lugar a confirmar')} · 🏢 ${esc(o.organizer || 'organizador a confirmar')}
-      </div>
-      <div style="font-size:12px; margin-top:2px;">⏳ Límite para postular: <b>${esc(o.deadline)}</b></div>
-      ${o.details ? `<div style="background:#faf7f2; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; white-space:pre-wrap;"><b>Detalles para el artista:</b>
-${esc(o.details)}</div>` : ''}
-    </div>
-  `).join('') : '<div class="empty">Sin convocatorias abiertas.</div>';
-}
-
-function renderFinances() {
-  $('fTable').innerHTML = data.finances.length ? `
-    <table class="table">
-      <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
-      <tbody>
-        ${data.finances.map(f => `
-          <tr style="cursor:pointer;" onclick="openForm('finance', ${f.id})" title="Clic para editar">
-            <td>${esc(f.date)}</td>
-            <td><b>${esc(f.concept)}</b></td>
-            <td><span class="pill ${f.type === 'Ingreso' ? 'green' : 'overdue'}">${esc(f.type)}</span></td>
-            <td><b>${money(f.amount)}</b></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  ` : '<div class="empty">No hay movimientos financieros registrados.</div>';
-}
-
-function renderCampaigns() {
-  const c = $('campaignsList');
-  if (!c) return;
-  c.innerHTML = data.campaigns.length ? data.campaigns.map(cp => `
-    <div class="record">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-        <div>
-          <b style="color:var(--wine); font-size:14px;">${esc(cp.title)}</b>
-          <span class="pill blue" style="margin-left:6px;">${esc(cp.channel || 'General')}</span>
-        </div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <span style="font-size:11px; color:var(--muted);">Envío: ${esc(cp.date || 'sin fecha')}</span>
-          <button class="btn sm danger" onclick="deleteRecord('campaigns', ${cp.id})">🗑</button>
-        </div>
-      </div>
-      <div style="font-size:12px; color:var(--muted); margin-top:4px;">Destinatarios: <b>${esc(cp.audience || '—')}</b></div>
-      <div style="background:#faf7f2; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; white-space:pre-wrap;">${esc(cp.message || '')}</div>
-    </div>
-  `).join('') : '<div class="empty">No hay campañas preparadas todavía.</div>';
-}
-
-function deleteRecord(key, id) {
-  if (!confirm('¿Eliminar este registro?')) return;
-  data[key] = (data[key] || []).filter(x => x.id !== id);
-  saveData();
-  renderAll();
-  toast('Registro eliminado');
-}
-
-function renderComms() {
-  $('commsList').innerHTML = data.comms.length ? data.comms.map(c => `
-    <div class="timeline-item">
-      <div><b>${esc(c.date)}</b> - ${esc(c.sponsorName || 'Sponsor')}</div>
-      <div>${esc(c.note)}</div>
-    </div>
-  `).join('') : '<div class="empty">Historial vacío.</div>';
-}
-
-function openCustomModal(title, html) {
-  $('modalTitle').textContent = title;
-  $('modalBody').innerHTML = html;
-  $('modal').style.display = 'flex';
-}
-function closeModal() { $('modal').style.display = 'none'; }
-
-function renderAll() {
-  renderHome();
-  renderEvents();
-  renderContentList();
-  renderSponsors();
-  renderSingers();
-  renderOpps();
-  renderFinances();
-  renderCampaigns();
-  renderComms();
-}
-
-function switchUserRoleModal() {
-  const role = currentRole === 'admin' ? 'cantor' : 'admin';
-  currentRole = role;
-  if (role === 'admin') {
-    $('adminSidebar').classList.remove('hidden');
-    tab('home');
-  } else {
-    $('adminSidebar').classList.add('hidden');
-    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-    $('cantorPortal').classList.remove('hidden');
-  }
-  toast(`Modo activo: ${role}`);
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `pena_pepe_backup_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-}
-
-function importData(e) {
-  const f = e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = () => {
+  function loadData() {
     try {
-      data = { ...data, ...JSON.parse(r.result) };
-      saveData();
-      renderAll();
-      toast('Respaldo cargado correctamente');
-    } catch(err){}
-  };
-  r.readAsText(f);
-}
+      const saved = localStorage.getItem(DB_KEY);
+      if (saved) {
+        data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [], ...JSON.parse(saved) };
+      }
+    } catch(e){}
+  }
 
-function clearData() {
-  if (confirm('¿Borrar todos los datos localmente?')) {
-    data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
+  function saveData() {
+    try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch(e){}
+  }
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const money = n => new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 }).format(Number(n)||0);
+  const uid = () => Date.now() + Math.floor(Math.random() * 1000);
+
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2500);
+  }
+
+  function checkExpiredOpps() {
+    const today = new Date().toISOString().slice(0, 10);
+    data.opps.forEach(o => {
+      if (o.deadline && o.deadline < today) o.status = 'Cerrada';
+    });
+  }
+
+  function tab(tabName) {
+    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+    $(tabName).classList.remove('hidden');
+    document.querySelectorAll('.sidebar-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+
+    if (tabName === 'home') renderHome();
+    if (tabName === 'events') renderEvents();
+    if (tabName === 'content') renderContentList();
+    if (tabName === 'sponsors') renderSponsors();
+    if (tabName === 'singers') renderSingers();
+    if (tabName === 'opportunities') renderOpps();
+    if (tabName === 'finance') renderFinances();
+    if (tabName === 'comms') renderComms();
+  }
+
+  /* REGISTROS Y FORMULARIOS */
+  function openNewRecordSelector() {
+    const html = `
+      <p>Elegí la categoría de registro:</p>
+      <div class="selector-grid">
+        <div class="selector-card" onclick="closeModal(); openForm('event');">
+          <h3>📅 Evento</h3>
+          <p>Planificar nueva fecha de peña o festival.</p>
+        </div>
+        <div class="selector-card" onclick="closeModal(); openForm('content');">
+          <h3>📱 Contenido</h3>
+          <p>Publicación para redes sociales.</p>
+        </div>
+        <div class="selector-card" onclick="closeModal(); openForm('sponsor');">
+          <h3>🏢 Sponsor</h3>
+          <p>Marca o acuerdo comercial.</p>
+        </div>
+        <div class="selector-card" onclick="closeModal(); openForm('finance');">
+          <h3>💰 Finanza Extra</h3>
+          <p>Ingreso o egreso no habitual.</p>
+        </div>
+      </div>
+    `;
+    openCustomModal('Nuevo Registro', html);
+  }
+
+  function openForm(type, id = null) {
+    currentFormType = type;
+    editId = id;
+    const rec = id ? ((data[type + 's'] || data[type] || []).find(x => x.id === id) || {}) : {};
+
+    let fields = '';
+    let title = id ? 'Editar Registro' : 'Nuevo Registro';
+
+    if (type === 'event') {
+      title = 'Planificar Evento';
+      fields = `
+        <div class="field full">
+          <label>Nombre / Título del Evento *</label>
+          <input name="title" value="${esc(rec.title || '')}" required>
+        </div>
+        <div class="field">
+          <label>Fecha del Evento *</label>
+          <input type="date" name="date" value="${rec.date || ''}" required>
+        </div>
+        <div class="field">
+          <label>Lugar / Sede</label>
+          <input name="place" value="${esc(rec.place || '')}">
+        </div>
+        <div class="field full">
+          <label>Lista de Actividades / Grilla de Artistas</label>
+          <textarea name="activities" placeholder="12:00 - Apertura\n13:30 - Cantor invitado...">${esc(rec.activities || '')}</textarea>
+        </div>
+      `;
+    } else if (type === 'content') {
+      title = 'Programar Publicación de Redes';
+      fields = `
+        <div class="field full">
+          <label>Título / Idea de la Publicación *</label>
+          <input name="title" value="${esc(rec.title || '')}" required>
+        </div>
+        <div class="field">
+          <label>Red Social / Plataforma</label>
+          <select name="platform">
+            <option value="Instagram" ${rec.platform === 'Instagram' ? 'selected' : ''}>Instagram</option>
+            <option value="Facebook" ${rec.platform === 'Facebook' ? 'selected' : ''}>Facebook</option>
+            <option value="TikTok" ${rec.platform === 'TikTok' ? 'selected' : ''}>TikTok</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado de Producción</label>
+          <select name="status">
+            <option value="Pauta" ${rec.status === 'Pauta' ? 'selected' : ''}>Pauta / Idea</option>
+            <option value="Producción" ${rec.status === 'Producción' ? 'selected' : ''}>En producción</option>
+            <option value="Listo" ${rec.status === 'Listo' ? 'selected' : ''}>Listo para publicar</option>
+            <option value="Publicado" ${rec.status === 'Publicado' ? 'selected' : ''}>Publicado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha Programada</label>
+          <input type="date" name="pubDate" value="${rec.pubDate || ''}">
+        </div>
+        <div class="field full">
+          <label>Texto / Copy de la publicación</label>
+          <textarea name="copy">${esc(rec.copy || '')}</textarea>
+        </div>
+      `;
+    } else if (type === 'finance') {
+      title = 'Movimiento Financiero Extra';
+      fields = `
+        <div class="field full">
+          <label>Concepto / Descripción *</label>
+          <input name="concept" value="${esc(rec.concept || '')}" required>
+        </div>
+        <div class="field">
+          <label>Tipo de Movimiento</label>
+          <select name="type">
+            <option value="Ingreso" ${rec.type === 'Ingreso' ? 'selected' : ''}>Ingreso (+)</option>
+            <option value="Egreso" ${rec.type === 'Egreso' ? 'selected' : ''}>Egreso (-)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Monto (UYU) *</label>
+          <input type="number" name="amount" value="${rec.amount || ''}" required>
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" name="date" value="${rec.date || new Date().toISOString().slice(0, 10)}">
+        </div>
+      `;
+    } else if (type === 'sponsor') {
+      title = 'Sponsor Commercial';
+      fields = `
+        <div class="field full"><label>Empresa *</label><input name="name" value="${esc(rec.name||'')}" required></div>
+        <div class="field"><label>Categoría</label><select name="category"><option value="" ${!rec.category?'selected':''}>Sin definir</option><option value="Principal" ${rec.category==='Principal'?'selected':''}>Principal</option><option value="Apoyo" ${rec.category==='Apoyo'?'selected':''}>Apoyo</option></select><span class="field-note">se define al conversar la propuesta</span></div>
+        <div class="field"><label>Estado</label><select name="status">${SPONSOR_STAGES.map(s=>`<option value="${s}" ${rec.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="field"><label>Contacto</label><input name="contact" value="${esc(rec.contact||'')}"></div>
+        <div class="field"><label>Importe (UYU)</label><input type="number" name="amount" value="${rec.amount||0}"></div>
+        <div class="field"><label>Cobrado (UYU)</label><input type="number" name="paid" value="${rec.paid||0}"></div>
+        <div class="field"><label>Próx. Fecha Acción</label><input type="date" name="nextDate" value="${rec.nextDate||''}"></div>
+      `;
+    } else if (type === 'singer') {
+      title = 'Ficha de Cantor';
+      fields = `
+        <div class="field full"><label>Nombre Completo / Artístico *</label><input name="name" value="${esc(rec.name||'')}" required></div>
+        <div class="field"><label>Formato</label><select name="format"><option>Solista</option><option>Duo</option><option>Grupo</option><option>Músico</option></select></div>
+        <div class="field"><label>Documento de Identidad</label><input name="doc" value="${esc(rec.doc||'')}"><span class="field-note">sólo será útil para facilitar accesos a eventos o proyectos culturales</span></div>
+        <div class="field"><label>Teléfono</label><input name="phone" value="${esc(rec.phone||'')}"></div>
+        <div class="field"><label>Punto de partida habitual</label><input name="origin" value="${esc(rec.origin||'')}" placeholder="Ciudad / localidad de base"><span class="field-note">para estimar costos de traslado</span></div>
+        <div class="field"><label>Caché Peña (Mín)</label><input type="number" name="feePePena" value="${rec.feePePena||''}"></div>
+        <div class="field"><label>Caché Festival (Máx)</label><input type="number" name="feeFestival" value="${rec.feeFestival||''}"></div>
+      `;
+    } else if (type === 'opportunity') {
+      title = 'Convocatoria / Oportunidad';
+      fields = `
+        <div class="field full"><label>Evento / Convocatoria *</label><input name="title" value="${esc(rec.title||'')}" required></div>
+        <div class="field"><label>Fecha del Evento</label><input type="date" name="eventDate" value="${rec.eventDate||''}"></div>
+        <div class="field"><label>Lugar</label><input name="place" value="${esc(rec.place||'')}" placeholder="Ciudad / sede"></div>
+        <div class="field"><label>Organizador</label><input name="organizer" value="${esc(rec.organizer||'')}"></div>
+        <div class="field"><label>Fecha límite para postular *</label><input type="date" name="deadline" value="${rec.deadline||''}" required></div>
+        <div class="field full"><label>Detalles a considerar por el artista</label><textarea name="details" placeholder="Caché, hospedaje, requisitos técnicos...">${esc(rec.details||'')}</textarea></div>
+      `;
+    }
+
+    if (type === 'campaign') {
+      title = 'Campaña de Comunicación';
+      fields = `
+        <div class="field full"><label>Nombre de la campaña *</label><input name="title" value="${esc(rec.title||'')}" required></div>
+        <div class="field"><label>Canal</label><select name="channel">
+          <option value="WhatsApp" ${rec.channel==='WhatsApp'?'selected':''}>WhatsApp</option>
+          <option value="Email" ${rec.channel==='Email'?'selected':''}>Email</option>
+          <option value="Instagram" ${rec.channel==='Instagram'?'selected':''}>Instagram</option>
+          <option value="General" ${rec.channel==='General'?'selected':''}>General</option>
+        </select></div>
+        <div class="field"><label>Fecha de envío</label><input type="date" name="date" value="${rec.date||''}"></div>
+        <div class="field full"><label>Público destinatario</label><input name="audience" value="${esc(rec.audience||'')}" placeholder="Ej: Sponsors confirmados, todos los cantores..."></div>
+        <div class="field full"><label>Mensaje</label><textarea name="message" placeholder="Texto del mensaje masivo...">${esc(rec.message||'')}</textarea></div>
+      `;
+    }
+
+    const html = `
+      <form onsubmit="saveFormSubmit(event, '${type}')">
+        <div class="form-grid">${fields}</div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+          <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar</button>
+        </div>
+      </form>
+    `;
+    openCustomModal(title, html);
+  }
+
+  function saveFormSubmit(e, type) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const obj = {};
+    formData.forEach((v, k) => obj[k] = v);
+
+    let targetKey = type + 's';
+    if (type === 'content') targetKey = 'content';
+    if (type === 'finance') targetKey = 'finances';
+
+    if (!data[targetKey]) data[targetKey] = [];
+
+    if (editId) {
+      const idx = data[targetKey].findIndex(x => x.id === editId);
+      if (idx !== -1) data[targetKey][idx] = { ...data[targetKey][idx], ...obj };
+    } else {
+      const newRec = { id: uid(), ...obj };
+      if (type === 'sponsor') newRec.history = [];
+      data[targetKey].unshift(newRec);
+    }
+
+    saveData();
+    closeModal();
+    renderAll();
+    toast('Registro guardado');
+  }
+
+  /* RENDERS DE MÓDULOS */
+  function renderHome() {
+    const sponsorPending = data.sponsors.reduce((acc, curr) => acc + Math.max(0, (Number(curr.amount)||0) - (Number(curr.paid)||0)), 0);
+    const extraNet = data.finances.reduce((acc, curr) => acc + (curr.type === 'Ingreso' ? Number(curr.amount) : -Number(curr.amount)), 0);
+
+    $('sponsorsPending').textContent = money(sponsorPending);
+    $('extraNet').textContent = money(extraNet);
+    $('balanceNet').textContent = money(sponsorPending + extraNet);
+
+    const upcomingEvents = data.events.filter(e => e.date >= new Date().toISOString().slice(0, 10)).sort((a,b) => a.date.localeCompare(b.date));
+    if (upcomingEvents.length) {
+      $('nextEventTitle').textContent = upcomingEvents[0].title;
+      $('nextEventMeta').textContent = `📅 Fecha: ${upcomingEvents[0].date} | 📍 ${upcomingEvents[0].place || 'Sede a confirmar'}`;
+    }
+
+    const pendingContent = data.content.filter(c => c.status !== 'Publicado').slice(0, 5);
+    $('homeContentTasks').innerHTML = pendingContent.length ? pendingContent.map(c => `
+      <div class="record" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <b>${esc(c.title)}</b> (${esc(c.platform)})
+          <div style="font-size:11px; color:var(--muted);">Fecha prevista: ${esc(c.pubDate || 'Sin fecha')}</div>
+        </div>
+        <span class="pill blue">${esc(c.status)}</span>
+      </div>
+    `).join('') : '<div class="empty">No hay publicaciones pendientes programadas.</div>';
+  }
+
+  function renderEvents() {
+    const container = $('eventsList');
+    container.innerHTML = data.events.length ? data.events.map(e => `
+      <div class="panel" style="cursor:pointer;" onclick="openForm('event', ${e.id})" title="Clic para editar">
+        <div style="display:flex; justify-content:space-between;">
+          <h3 style="margin:0; color:var(--wine);">${esc(e.title)}</h3>
+          <span class="pill green">📅 ${esc(e.date)}</span>
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin:4px 0;">📍 ${esc(e.place || 'Sede sin especificar')}</p>
+        <div style="background:#faf7f2; padding:10px; border-radius:6px; margin-top:8px; white-space:pre-wrap; font-size:12px;"><b>Planificación / Grilla:</b>\n${esc(e.activities || 'Sin actividades detalladas')}</div>
+      </div>
+    `).join('') : '<div class="empty">No hay eventos planificados.</div>';
+  }
+
+  function renderContentList() {
+    const container = $('contentList');
+    container.innerHTML = data.content.length ? data.content.map(c => `
+      <div class="record" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="openForm('content', ${c.id})" title="Clic para editar">
+        <div>
+          <h4 style="margin:0; color:var(--wine);">${esc(c.title)}</h4>
+          <div style="font-size:12px; color:var(--muted);">Plataforma: <b>${esc(c.platform)}</b> | Fecha: ${esc(c.pubDate || 'Sin fecha')}</div>
+          <p style="margin:4px 0 0; font-size:12px;">${esc(c.copy || '')}</p>
+        </div>
+        <span class="pill blue">${esc(c.status)}</span>
+      </div>
+    `).join('') : '<div class="empty">No hay contenidos en el cronograma.</div>';
+  }
+
+  function sponsorFilters() {
+    const q = (($('sSearch') || {}).value || '').toLowerCase();
+    const cat = ($('sCatFilter') || {}).value || '';
+    return data.sponsors.filter(s => {
+      const matchQ = !q || (s.name || '').toLowerCase().includes(q) || (s.contact || '').toLowerCase().includes(q);
+      let matchCat = true;
+      if (cat === '__none__') matchCat = !(s.category || '');
+      else if (cat) matchCat = (s.category || '') === cat;
+      return matchQ && matchCat;
+    });
+  }
+
+  function renderSponsors() {
+    const list = sponsorFilters();
+    $('sponsorKanbanView').innerHTML = SPONSOR_STAGES.map(stage => {
+      const colItems = list.filter(s => (s.status || 'Prospecto') === stage);
+      return `
+        <div class="kanban-col">
+          <div class="kanban-col-head">
+            <h3>${stage}</h3>
+            <span>${colItems.length}</span>
+          </div>
+          <div class="kanban-cards">
+            ${colItems.map(s => `
+              <div class="kanban-card" style="cursor:pointer;" onclick="openSponsorDetail(${s.id})" title="Clic para ver ficha">
+                <b>${esc(s.name)}</b>
+                <div style="font-size:11px; color:var(--muted);">${esc(s.category || 'Sin categoría')} · ${esc(s.contact || 'sin contacto')}</div>
+                <div style="font-size:11px; color:var(--muted);">Importe: ${money(s.amount)} · Cobrado: ${money(s.paid)}</div>
+                ${(s.history || []).length ? `<div style="font-size:10px; color:var(--gold); margin-top:4px;">📝 ${s.history.length} nota(s) de seguimiento</div>` : ''}
+              </div>
+            `).join('') || '<div style="font-size:11px; color:var(--muted); text-align:center; padding:8px;">—</div>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    $('sponsorListView').innerHTML = list.length ? `
+      <table class="table">
+        <thead><tr><th>Empresa</th><th>Categoría</th><th>Estado</th><th>Contacto</th><th>Importe</th><th>Cobrado</th><th>Pendiente</th><th>Próx. acción</th></tr></thead>
+        <tbody>
+          ${list.map(s => `
+            <tr style="cursor:pointer;" onclick="openSponsorDetail(${s.id})" title="Clic para ver ficha">
+              <td><b>${esc(s.name)}</b></td>
+              <td>${esc(s.category || 'Sin definir')}</td>
+              <td><span class="pill blue">${esc(s.status || 'Prospecto')}</span></td>
+              <td>${esc(s.contact || '—')}</td>
+              <td>${money(s.amount)}</td>
+              <td>${money(s.paid)}</td>
+              <td><b>${money(Math.max(0, (Number(s.amount)||0) - (Number(s.paid)||0)))}</b></td>
+              <td>${esc(s.nextDate || '—')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : '<div class="empty">No hay sponsors que coincidan con la búsqueda.</div>';
+  }
+
+  function toggleSponsorView() {
+    sponsorView = sponsorView === 'kanban' ? 'lista' : 'kanban';
+    const isKanban = sponsorView === 'kanban';
+    $('sponsorKanbanView').classList.toggle('hidden', !isKanban);
+    $('sponsorListView').classList.toggle('hidden', isKanban);
+    $('sViewToggle').textContent = isKanban ? '📋 Ver como lista' : '🗂️ Ver kanban';
+  }
+
+  function openSponsorDetail(id) {
+    const s = data.sponsors.find(x => x.id === id);
+    if (!s) return;
+    const hist = (s.history || []).map(h => `
+      <div class="timeline-item">
+        <div><b>${esc(h.date)}</b>${h.who ? ' · con ' + esc(h.who) : ''}</div>
+        <div>${esc(h.note)}</div>
+      </div>`).join('');
+    const html = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div>
+          <h3 style="margin:0; color:var(--wine); font-size:20px;">${esc(s.name)}</h3>
+          <div style="font-size:12px; color:var(--muted); margin-top:2px;">
+            <span class="pill blue">${esc(s.category || 'Sin categoría')}</span>
+            <span class="pill">${esc(s.status || 'Prospecto')}</span>
+          </div>
+          <div style="font-size:13px; margin-top:8px;">
+            Contacto: <b>${esc(s.contact || '—')}</b><br>
+            Importe: <b>${money(s.amount)}</b> · Cobrado: <b>${money(s.paid)}</b> · Pendiente: <b>${money(Math.max(0, (Number(s.amount)||0) - (Number(s.paid)||0)))}</b>
+            ${s.nextDate ? `<br>Próxima acción: <b>${esc(s.nextDate)}</b>` : ''}
+          </div>
+        </div>
+        <button class="btn sm" onclick="closeModal(); openForm('sponsor', ${s.id})">✏️ Editar ficha</button>
+      </div>
+      <hr style="border:0; border-top:1px solid var(--line); margin:14px 0;">
+      <h4 style="margin:0 0 8px; color:var(--wine);">📝 Historial de seguimiento</h4>
+      <div class="timeline" style="max-height:220px; overflow-y:auto; margin-bottom:12px;">
+        ${hist || '<div class="empty" style="padding:14px;">Sin notas todavía. Registrá la primera conversación abajo.</div>'}
+      </div>
+      <div class="field"><label>Nueva nota — ¿qué se habló?</label><textarea id="noteText" placeholder="Ej: Hablamos por teléfono, pidieron propuesta formal por email..."></textarea></div>
+      <div class="field"><label>¿Con quién se habló?</label><input id="noteWho" placeholder="Nombre de la persona de contacto"></div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn primary" onclick="addSponsorNote(${s.id})">💾 Guardar nota (fecha de hoy)</button>
+      </div>`;
+    openCustomModal('Ficha de Sponsor', html);
+  }
+
+  function addSponsorNote(id) {
+    const s = data.sponsors.find(x => x.id === id);
+    if (!s) return;
+    const note = $('noteText').value.trim();
+    const who = $('noteWho').value.trim();
+    if (!note) { toast('Escribí una nota antes de guardar'); return; }
+    if (!s.history) s.history = [];
+    s.history.unshift({ id: uid(), date: new Date().toISOString().slice(0, 10), note, who });
+    saveData();
+    renderSponsors();
+    openSponsorDetail(id);
+    toast('Nota guardada');
+  }
+
+  function renderSingers() {
+    const q = (($('cSearch') || {}).value || '').toLowerCase();
+    const list = data.singers.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.doc || '').toLowerCase().includes(q) || (s.origin || '').toLowerCase().includes(q));
+    $('cTable').innerHTML = list.length ? `
+      <table class="table">
+        <thead><tr><th>Cantor</th><th>Formato</th><th>Punto de partida</th><th>Documento</th><th>Teléfono</th><th>Caché Peña</th><th>Caché Festival</th></tr></thead>
+        <tbody>
+          ${list.map(s => `<tr style="cursor:pointer;" onclick="openForm('singer', ${s.id})" title="Clic para editar">
+            <td><b>${esc(s.name)}</b></td>
+            <td>${esc(s.format)}</td>
+            <td>${esc(s.origin || '—')}</td>
+            <td>${esc(s.doc || '—')}</td>
+            <td>${esc(s.phone || '—')}</td>
+            <td>${money(s.feePePena)}</td>
+            <td>${money(s.feeFestival)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : '<div class="empty">No hay cantores en la base.</div>';
+  }
+
+  function renderOpps() {
+    $('oList').innerHTML = data.opps.length ? data.opps.map(o => `
+      <div class="record" style="cursor:pointer;" onclick="openForm('opportunity', ${o.id})" title="Clic para editar">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <b style="color:var(--wine); font-size:15px;">${esc(o.title)}</b>
+          <span class="pill ${o.status === 'Cerrada' ? 'overdue' : 'blue'}">${esc(o.status || 'Abierta')}</span>
+        </div>
+        <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+          📅 Evento: <b>${esc(o.eventDate || 'a confirmar')}</b> · 📍 ${esc(o.place || 'lugar a confirmar')} · 🏢 ${esc(o.organizer || 'organizador a confirmar')}
+        </div>
+        <div style="font-size:12px; margin-top:2px;">⏳ Límite para postular: <b>${esc(o.deadline)}</b></div>
+        ${o.details ? `<div style="background:#faf7f2; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; white-space:pre-wrap;"><b>Detalles para el artista:</b>
+${esc(o.details)}</div>` : ''}
+      </div>
+    `).join('') : '<div class="empty">Sin convocatorias abiertas.</div>';
+  }
+
+  function renderFinances() {
+    $('fTable').innerHTML = data.finances.length ? `
+      <table class="table">
+        <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+        <tbody>
+          ${data.finances.map(f => `
+            <tr style="cursor:pointer;" onclick="openForm('finance', ${f.id})" title="Clic para editar">
+              <td>${esc(f.date)}</td>
+              <td><b>${esc(f.concept)}</b></td>
+              <td><span class="pill ${f.type === 'Ingreso' ? 'green' : 'overdue'}">${esc(f.type)}</span></td>
+              <td><b>${money(f.amount)}</b></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : '<div class="empty">No hay movimientos financieros registrados.</div>';
+  }
+
+  function renderCampaigns() {
+    const c = $('campaignsList');
+    if (!c) return;
+    c.innerHTML = data.campaigns.length ? data.campaigns.map(cp => `
+      <div class="record">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div>
+            <b style="color:var(--wine); font-size:14px;">${esc(cp.title)}</b>
+            <span class="pill blue" style="margin-left:6px;">${esc(cp.channel || 'General')}</span>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span style="font-size:11px; color:var(--muted);">Envío: ${esc(cp.date || 'sin fecha')}</span>
+            <button class="btn sm danger" onclick="deleteRecord('campaigns', ${cp.id})">🗑</button>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--muted); margin-top:4px;">Destinatarios: <b>${esc(cp.audience || '—')}</b></div>
+        <div style="background:#faf7f2; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; white-space:pre-wrap;">${esc(cp.message || '')}</div>
+      </div>
+    `).join('') : '<div class="empty">No hay campañas preparadas todavía.</div>';
+  }
+
+  function deleteRecord(key, id) {
+    if (!confirm('¿Eliminar este registro?')) return;
+    data[key] = (data[key] || []).filter(x => x.id !== id);
     saveData();
     renderAll();
-    toast('Datos eliminados');
+    toast('Registro eliminado');
   }
-}
 
-window.onload = init;
+  function renderComms() {
+    $('commsList').innerHTML = data.comms.length ? data.comms.map(c => `
+      <div class="timeline-item">
+        <div><b>${esc(c.date)}</b> - ${esc(c.sponsorName || 'Sponsor')}</div>
+        <div>${esc(c.note)}</div>
+      </div>
+    `).join('') : '<div class="empty">Historial vacío.</div>';
+  }
 
+  function openCustomModal(title, html) {
+    $('modalTitle').textContent = title;
+    $('modalBody').innerHTML = html;
+    $('modal').style.display = 'flex';
+  }
+  function closeModal() { $('modal').style.display = 'none'; }
+
+  function renderAll() {
+    renderHome();
+    renderEvents();
+    renderContentList();
+    renderSponsors();
+    renderSingers();
+    renderOpps();
+    renderFinances();
+    renderCampaigns();
+    renderComms();
+  }
+
+  function switchUserRoleModal() {
+    const role = currentRole === 'admin' ? 'cantor' : 'admin';
+    currentRole = role;
+    if (role === 'admin') {
+      $('adminSidebar').classList.remove('hidden');
+      tab('home');
+    } else {
+      $('adminSidebar').classList.add('hidden');
+      document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+      $('cantorPortal').classList.remove('hidden');
+    }
+    toast(`Modo activo: ${role}`);
+  }
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `pena_pepe_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+  }
+
+  function importData(e) {
+    const f = e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        data = { ...data, ...JSON.parse(r.result) };
+        saveData();
+        renderAll();
+        toast('Respaldo cargado correctamente');
+      } catch(err){}
+    };
+    r.readAsText(f);
+  }
+
+  function clearData() {
+    if (confirm('¿Borrar todos los datos localmente?')) {
+      data = { sponsors: [], singers: [], opps: [], comms: [], events: [], content: [], finances: [], campaigns: [] };
+      saveData();
+      renderAll();
+      toast('Datos eliminados');
+    }
+  }
+
+  window.onload = init;
 </script>
 </body>
 </html>
