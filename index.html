@@ -10,19 +10,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // 1. Tu URL de Supabase ya configurada con tu ID de proyecto
+  // 1. Configuración de Supabase
   const SUPABASE_URL = 'https://dlbwfdmatbuutjzynkms.supabase.co';
-  
-  // 2. Pega aquí tu Publishable key (la que empieza con sb_publishable_...)
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_IlgS31rM03sbzkwwuYhZsg_oQSS3YOo';
+  const SUPABASE_PUBLISHABLE_KEY = 'TU_CLAVE_PUBLISHABLE_AQUI'; // Asegúrate de tener tu clave real aquí
 
-  // Inicializar el cliente de Supabase
+  // 2. Inicializar cliente
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-  // Función de prueba rápida para verificar la conexión
+  // 3. Función de prueba
   async function probarConexionSupabase() {
     try {
-      // Reemplaza 'nombre_de_tu_tabla' por una tabla real que tengas creada en Supabase
       const { data, error } = await _supabase
         .from('Tabla')
         .select('*')
@@ -38,6 +35,10 @@
     }
   }
 
+  // Ejecutar prueba
+  probarConexionSupabase();
+</script>
+  
   // Ejecutar la prueba al cargar la página
   probarConexionSupabase();
 </script>
