@@ -6,13 +6,41 @@
 <title>Peña de Pepe | Gestión Comercial, Eventos y Contenidos</title>
 
 <!-- SUPABASE JS SDK -->
+<!-- SUPABASE JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+  // 1. Tu URL de Supabase ya configurada con tu ID de proyecto
   const SUPABASE_URL = 'https://dlbwfdmatbuutjzynkms.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_secret_GOgUoQ02XDT1wQmZ5fR0YA_3DFxWMSX';
+  
+  // 2. Pega aquí tu Publishable key (la que empieza con sb_publishable_...)
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AQUI_PEGA_TU_CLAVE';
 
+  // Inicializar el cliente de Supabase
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-</script>
 
+  // Función de prueba rápida para verificar la conexión
+  async function probarConexionSupabase() {
+    try {
+      // Reemplaza 'nombre_de_tu_tabla' por una tabla real que tengas creada en Supabase
+      const { data, error } = await _supabase
+        .from('nombre_de_tu_tabla')
+        .select('*')
+        .limit(1);
+
+      if (error) {
+        console.error('❌ Error al conectar con Supabase:', error.message);
+      } else {
+        console.log('¡Conexión exitosa con Supabase! Datos de prueba:', data);
+      }
+    } catch (err) {
+      console.error('❌ Ocurrió un error inesperado:', err);
+    }
+  }
+
+  // Ejecutar la prueba al cargar la página
+  probarConexionSupabase();
+</script>
 <style>
 :root {
   --wine: #5b1825;
