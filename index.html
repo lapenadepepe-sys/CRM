@@ -5,261 +5,84 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Peña de Pepe | Gestión Comercial, Eventos y Contenidos</title>
 
-<!-- SUPABASE JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- SUPABASE JS SDK (versión fija) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
 <script>
   const SUPABASE_URL = 'https://dlbwfdmatbuutjzynkms.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_IlgS31rM03sbzkwuuYHzsg_oQSS3YOo';
-  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  let _supabase = null;
+  try {
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
+    });
+  } catch (e) { console.error('No se pudo iniciar Supabase', e); }
 </script>
 
 <style>
 :root {
-  --wine: #5b1825;
-  --wine-dark: #3e0f18;
-  --wine-light: #762b36;
-  --gold: #c6a15b;
-  --gold-light: #e2ca91;
-  --cream: #f8f4ec;
-  --paper: #ffffff;
-  --ink: #28231e;
-  --muted: #776d62;
-  --line: #e6dac7;
-  --green: #2e6930;
-  --red: #9a3434;
-  --blue: #2563eb;
+  --wine: #5b1825; --wine-dark: #3e0f18; --wine-light: #762b36;
+  --gold: #c6a15b; --gold-light: #e2ca91; --cream: #f8f4ec; --paper: #ffffff;
+  --ink: #28231e; --muted: #776d62; --line: #e6dac7;
+  --green: #2e6930; --red: #9a3434; --blue: #2563eb;
   --shadow: 0 10px 25px -5px rgba(53,16,24,0.08), 0 4px 10px -6px rgba(53,16,24,0.04);
 }
-
 * { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--cream);
-  color: var(--ink);
-  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
-}
-
+body { margin: 0; background: var(--cream); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
-/* Login Screen */
-.login-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--wine-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-.login-card {
-  background: var(--paper);
-  border-radius: 12px;
-  padding: 32px;
-  width: min(420px, 100%);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  border-top: 6px solid var(--gold);
-  text-align: center;
-}
+/* Login */
+.login-overlay { position: fixed; inset: 0; background: var(--wine-dark); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.login-card { background: var(--paper); border-radius: 12px; padding: 32px; width: min(420px, 100%); box-shadow: 0 20px 40px rgba(0,0,0,0.3); border-top: 6px solid var(--gold); text-align: center; }
 .login-card h2 { color: var(--wine); font-family: Georgia, serif; margin: 0 0 6px; }
 .login-card p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-.btn-google {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 6px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  transition: background 0.2s;
-}
+.btn-google { width: 100%; padding: 12px; border: 1px solid var(--line); background: #fff; border-radius: 6px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; transition: background 0.2s; }
 .btn-google:hover { background: #f8f6f0; }
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--muted);
-  font-size: 11px;
-  margin: 16px 0;
-}
-.divider::before, .divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--line);
-}
+.login-msg { font-size: 12px; margin-top: 10px; min-height: 16px; color: var(--red); }
+.divider { display: flex; align-items: center; text-align: center; color: var(--muted); font-size: 11px; margin: 16px 0; }
+.divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--line); }
 .divider::before { margin-right: .5em; }
 .divider::after { margin-left: .5em; }
 
-/* Dashboard Layout */
-.dashboard-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-.sidebar {
-  width: 250px;
-  background: var(--wine);
-  color: var(--cream);
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex-shrink: 0;
-}
-.sidebar-logo {
-  font-family: Georgia, serif;
-  font-weight: bold;
-  font-size: 22px;
-  color: var(--gold-light);
-  padding: 0 10px;
-}
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex-grow: 1;
-}
-.sidebar-nav-title {
-  font: 700 10px -apple-system, sans-serif;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(232, 220, 202, 0.5);
-  padding: 0 10px;
-  margin-top: 12px;
-  margin-bottom: 4px;
-}
-.sidebar-nav button {
-  background: transparent;
-  border: 0;
-  color: var(--cream);
-  padding: 10px 12px;
-  text-align: left;
-  border-radius: 6px;
-  font: 600 13px -apple-system, sans-serif;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-.sidebar-nav button.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--gold-light);
-  border-left: 3px solid var(--gold);
-}
-.sidebar-nav button:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.sidebar-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 14px;
-}
-.role-switcher-btn {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(232, 220, 202, 0.3);
-  color: var(--gold-light);
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: bold;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.main-area {
-  flex-grow: 1;
-  background: var(--cream);
-  padding: 28px clamp(16px, 3vw, 40px);
-  max-width: 1400px;
-}
-.header-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
+/* Layout */
+.dashboard-layout { display: flex; min-height: 100vh; }
+.sidebar { width: 250px; background: var(--wine); color: var(--cream); padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; }
+.sidebar-logo { font-family: Georgia, serif; font-weight: bold; font-size: 22px; color: var(--gold-light); padding: 0 10px; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
+.sidebar-nav-title { font: 700 10px -apple-system, sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(232,220,202,0.5); padding: 0 10px; margin-top: 12px; margin-bottom: 4px; }
+.sidebar-nav button { background: transparent; border: 0; color: var(--cream); padding: 10px 12px; text-align: left; border-radius: 6px; font: 600 13px -apple-system, sans-serif; transition: background 0.2s; display: flex; align-items: center; gap: 10px; width: 100%; }
+.sidebar-nav button.active { background: rgba(255,255,255,0.12); color: var(--gold-light); border-left: 3px solid var(--gold); }
+.sidebar-nav button:hover:not(.active) { background: rgba(255,255,255,0.05); }
+.sidebar-footer { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; }
+.role-switcher-btn { background: rgba(0,0,0,0.2); border: 1px solid rgba(232,220,202,0.3); color: var(--gold-light); padding: 8px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+.main-area { flex-grow: 1; background: var(--cream); padding: 28px clamp(16px, 3vw, 40px); max-width: 1400px; }
+.header-area { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
 .top-sub { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 h1.welcome-msg { margin: 0; font-size: clamp(22px, 3vw, 30px); font-weight: 600; font-family: Georgia, serif; color: var(--wine); }
 
-.widgets-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-.widgets-left-col {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.stat-card {
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
+.widgets-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px; }
+.widgets-left-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.stat-card { padding: 18px; border-radius: 12px; box-shadow: var(--shadow); }
 .stat-card.color-box { background: var(--wine); color: var(--cream); }
 .stat-card.paper-box { background: var(--paper); border: 1px solid var(--line); }
-
-.card-title { font: 700 10px -apple-system, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;}
+.card-title { font: 700 10px -apple-system, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 .color-box .card-title { color: var(--gold-light); }
 .stat-card strong { display: block; font-size: 28px; font-weight: 600; font-family: Georgia, serif; }
-
 .small-stat-row { display: flex; gap: 10px; margin-top: 10px; }
 .small-stat-item { flex: 1; }
 .small-stat-item span { font-size: 10px; color: var(--muted); display: block; }
-.color-box .small-stat-item span { color: var(--gold-light); }
+.progress-bar-bg { background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.progress-bar-fill { background: var(--gold); height: 100%; width: 0%; transition: width 0.3s; }
+.calendar-card { padding: 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.cal-month { font-weight: bold; font-size: 13px; color: var(--wine); }
+.agenda-item { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.agenda-item:last-child { border-bottom: 0; }
 
-.progress-bar-bg {
-  background: rgba(255, 255, 255, 0.2);
-  height: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-.progress-bar-fill {
-  background: var(--gold);
-  height: 100%;
-  width: 0%;
-  transition: width 0.3s;
-}
+.banner-box { border: 2px dashed var(--line); background: #faf7f2; padding: 14px; text-align: center; border-radius: 6px; margin: 10px 0; font-size: 11px; color: var(--muted); grid-column: 1 / -1; }
 
-/* Banner Layout Diagram */
-.banner-box {
-  border: 2px dashed var(--line);
-  background: #faf7f2;
-  padding: 14px;
-  text-align: center;
-  border-radius: 6px;
-  margin: 10px 0;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.btn {
-  border: 1px solid var(--line);
-  background: var(--paper);
-  color: var(--wine);
-  padding: 8px 14px;
-  border-radius: 6px;
-  font: 600 12px -apple-system, sans-serif;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
+.btn { border: 1px solid var(--line); background: var(--paper); color: var(--wine); padding: 8px 14px; border-radius: 6px; font: 600 12px -apple-system, sans-serif; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
 .btn:hover { background: #fdfaf3; border-color: var(--gold); }
 .btn.primary { background: var(--gold); border-color: var(--gold); color: #261114; }
 .btn.primary:hover { background: #b8934d; }
@@ -267,23 +90,8 @@ h1.welcome-msg { margin: 0; font-size: clamp(22px, 3vw, 30px); font-weight: 600;
 .btn.danger { color: var(--red); border-color: #f3c7c7; }
 .btn.sm { padding: 4px 8px; font-size: 11px; }
 
-.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
-.toolbar input, .toolbar select { flex-grow: 1; min-width: 140px; }
-
-.pill {
-  display: inline-block;
-  padding: 3px 8px;
-  font: 700 10px -apple-system, sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: #eee4d4;
-  color: #6d4b2a;
-  border-radius: 4px;
-}
+.pill { display: inline-block; padding: 3px 8px; font: 700 10px -apple-system, sans-serif; text-transform: uppercase; letter-spacing: 0.03em; background: #eee4d4; color: #6d4b2a; border-radius: 4px; }
 .pill.blue { background: #dbeafe; color: var(--blue); }
-.pill.overdue { background: #f4dedd; color: var(--red); }
-.pill.green { background: #e0ebdf; color: var(--green); }
-
 .hidden { display: none !important; }
 .panel, .record, .kanban-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
 .panel { padding: 18px; margin-bottom: 18px; }
@@ -303,21 +111,25 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th { text-align: left; font: 700 10px -apple-system, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px; border-bottom: 2px solid var(--line); white-space: nowrap; }
 .table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.table tr:hover td { background: #fdfaf3; }
 
 .kanban-board { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 10px; }
 .kanban-col { background: #f3ece0; border-radius: 8px; padding: 10px; min-height: 400px; display: flex; flex-direction: column; }
 .kanban-col-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .kanban-col-head h3 { margin: 0; font-size: 12px; font-weight: 700; color: var(--wine); text-transform: uppercase; }
 .kanban-cards { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.kanban-card { padding: 10px; cursor: grab; user-select: none; }
+.kanban-card { padding: 10px; cursor: pointer; user-select: none; }
 .kanban-card:hover { border-color: var(--gold); transform: translateY(-2px); }
 
-.modal { position: fixed; inset: 0; background: rgba(33, 17, 22, 0.6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; backdrop-filter: blur(2px); }
+.modal { position: fixed; inset: 0; background: rgba(33,17,22,0.6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; backdrop-filter: blur(2px); }
 .modal-box { width: min(650px, 100%); max-height: 90vh; overflow-y: auto; background: var(--paper); padding: 20px; border-radius: 8px; border-top: 5px solid var(--gold); }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .close { border: 0; background: none; font-size: 22px; color: var(--muted); cursor: pointer; }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--wine); color: white; padding: 10px 20px; border-radius: 20px; border: 1px solid var(--gold); display: none; z-index: 200; font-size: 13px; font-weight: bold; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--wine); color: white; padding: 10px 20px; border-radius: 20px; border: 1px solid var(--gold); display: none; z-index: 2000; font-size: 13px; font-weight: bold; max-width: 90vw; }
+.selector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+.selector-card { border: 2px solid var(--line); border-radius: 8px; padding: 14px; text-align: center; cursor: pointer; }
+.selector-card:hover { border-color: var(--gold); background: #fdfbf7; }
+.selector-card h3 { margin: 0 0 4px; color: var(--wine); font-size: 14px; }
+.selector-card p { margin: 0; font-size: 11px; color: var(--muted); }
 
 @media(max-width: 900px) {
   .dashboard-layout { flex-direction: column; }
@@ -325,18 +137,19 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
   .widgets-grid { grid-template-columns: 1fr; }
   .widgets-left-col { grid-template-columns: 1fr; }
   .kanban-board { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 
-<!-- PANTALLA DE ACCESO / LOGIN -->
+<!-- LOGIN -->
 <div class="login-overlay" id="loginScreen">
   <div class="login-card">
     <h2>PEÑA DE PEPE</h2>
     <p>Iniciá sesión para ingresar al sistema de gestión</p>
-    
-    <button class="btn-google" onclick="loginWithGoogle()">
+
+    <button class="btn-google" type="button" onclick="loginWithGoogle()">
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
       Continuar con Google
     </button>
@@ -346,22 +159,23 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
     <form onsubmit="loginWithEmail(event)">
       <div class="field" style="text-align:left;">
         <label>Correo Electrónico</label>
-        <input type="email" id="loginEmail" required placeholder="tu@correo.com">
+        <input type="email" id="loginEmail" required placeholder="tu@correo.com" autocomplete="email">
       </div>
       <div class="field" style="text-align:left;">
         <label>Contraseña</label>
-        <input type="password" id="loginPassword" required placeholder="••••••••">
+        <input type="password" id="loginPassword" required minlength="6" placeholder="••••••••" autocomplete="current-password">
       </div>
       <button type="submit" class="btn primary" style="width:100%; justify-content:center; padding:10px;">Ingresar</button>
+      <button type="button" class="btn" style="width:100%; justify-content:center; padding:10px; margin-top:8px;" onclick="signUpWithEmail()">Crear cuenta</button>
     </form>
+    <div class="login-msg" id="loginMsg"></div>
   </div>
 </div>
 
 <div class="dashboard-layout hidden" id="appLayout">
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">PEÑA DE PEPE</div>
-    
+
     <div class="sidebar-nav" id="adminSidebar">
       <div class="sidebar-nav-title">General</div>
       <button class="active" data-tab="home" onclick="tab('home')">📊 Visión General</button>
@@ -388,7 +202,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
     </div>
   </aside>
 
-  <!-- ÁREA PRINCIPAL -->
   <main class="main-area">
     <header class="header-area">
       <div>
@@ -400,7 +213,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </header>
 
-    <!-- VISIÓN GENERAL -->
     <section id="home">
       <div class="widgets-grid">
         <div class="widgets-left-col">
@@ -408,21 +220,15 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
             <span class="card-title">Objetivo Financiero</span>
             <strong id="objCurrent">$ 0</strong>
             <div style="font-size:11px; margin-top:2px;">de meta: <b id="objTarget">$ 100.000</b></div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" id="objProgress"></div>
-            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="objProgress"></div></div>
           </div>
 
           <div class="stat-card paper-box">
             <span class="card-title">Balance de Cobros & Extras</span>
             <strong id="balanceNet">$ 0</strong>
             <div class="small-stat-row">
-              <div class="small-stat-item">
-                <span>Cobros Sponsors: <b id="sponsorsPending">$ 0</b></span>
-              </div>
-              <div class="small-stat-item">
-                <span>Finanzas Extras: <b id="extraNet">$ 0</b></span>
-              </div>
+              <div class="small-stat-item"><span>Cobros Sponsors: <b id="sponsorsPending">$ 0</b></span></div>
+              <div class="small-stat-item"><span>Finanzas Extras: <b id="extraNet">$ 0</b></span></div>
             </div>
           </div>
 
@@ -451,7 +257,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </section>
 
-    <!-- EVENTOS -->
     <section id="events" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -465,10 +270,9 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       <div id="eventsList"></div>
     </section>
 
-    <!-- REDES Y CONTENIDOS -->
     <section id="content" class="hidden">
       <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
             <h2 style="margin:0; color:var(--wine);">Cronograma de Redes y Contenidos</h2>
             <p style="margin:2px 0; color:var(--muted); font-size:12px;">Descarga rápida de adjuntos y copiado de copy.</p>
@@ -479,7 +283,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       <div id="contentList"></div>
     </section>
 
-    <!-- SPONSORS -->
     <section id="sponsors" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -493,7 +296,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       <div id="sponsorKanbanView" class="kanban-board"></div>
     </section>
 
-    <!-- CANTORES -->
     <section id="singers" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -504,7 +306,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </section>
 
-    <!-- OPORTUNIDADES -->
     <section id="opportunities" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -515,7 +316,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </section>
 
-    <!-- FINANZAS -->
     <section id="finance" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -526,7 +326,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </section>
 
-    <!-- COMUNICACIONES Y BOLETÍN -->
     <section id="comms" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -540,7 +339,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </section>
 
-    <!-- PORTAL CANTOR -->
     <section id="cantorPortal" class="hidden">
       <div class="panel" style="border-top:4px solid var(--gold);">
         <h2 style="margin:0; color:var(--wine);">Mi Perfil de Cantor</h2>
@@ -553,7 +351,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
       </div>
     </section>
 
-    <!-- AJUSTES -->
     <section id="settings" class="hidden">
       <div class="panel">
         <h2 style="margin:0 0 12px; color:var(--wine);">Ajustes del Sistema</h2>
@@ -566,7 +363,6 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
   </main>
 </div>
 
-<!-- MODAL PRINCIPAL -->
 <div class="modal" id="modal">
   <div class="modal-box">
     <div class="modal-head">
@@ -582,102 +378,150 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
 <script>
   const DB_KEY = 'penaPepeCRM_v4';
   const ADMIN_EMAIL = 'lapena.depepe@gmail.com';
-  
-  let currentUser = null;
-  let activeRole = 'cantor'; // 'admin' o 'cantor'
-  let data = { sponsors: [], singers: [], opps: [], events: [], content: [], finances: [], campaigns: [], targetAmount: 100000 };
-
+  const COLL = { sponsor:'sponsors', singer:'singers', opportunity:'opps', event:'events', content:'content', finance:'finances', campaign:'campaigns' };
+  const NUMERIC = ['amount', 'paid', 'feePePena', 'feeFestival'];
   const SPONSOR_STAGES = ['Prospecto', 'Contactado', 'Propuesta enviada', 'Confirmado', 'No concretado'];
 
-  function init() {
-    loadData();
-    checkSession();
-  }
-
-  function loadData() {
-    try {
-      const saved = localStorage.getItem(DB_KEY);
-      if (saved) {
-        data = { sponsors: [], singers: [], opps: [], events: [], content: [], finances: [], campaigns: [], targetAmount: 100000, ...JSON.parse(saved) };
-      }
-    } catch(e){}
-  }
-
-  function saveData() {
-    try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch(e){}
-  }
+  let currentUser = null;   // { id, email, name, verified }
+  let activeRole = 'cantor';
+  let data = { sponsors: [], singers: [], opps: [], events: [], content: [], finances: [], campaigns: [], targetAmount: 100000 };
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   const money = n => new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 }).format(Number(n)||0);
   const uid = () => Date.now() + Math.floor(Math.random() * 1000);
+  const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
+  const opts = (list, cur) => list.map(v => `<option value="${esc(v)}" ${cur === v ? 'selected' : ''}>${esc(v)}</option>`).join('');
 
   function toast(msg) {
     const t = $('toast');
     t.textContent = msg;
     t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 2500);
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.style.display = 'none', 3500);
+  }
+  function loginMsg(msg) { $('loginMsg').textContent = msg || ''; }
+
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(DB_KEY);
+      if (saved) data = { ...data, ...JSON.parse(saved) };
+    } catch (e) {}
+  }
+  function saveData() { try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch (e) {} }
+
+  /* ================= AUTENTICACIÓN (Supabase) ================= */
+  async function init() {
+    loadData();
+    reportAuthErrorFromUrl();
+
+    if (!_supabase) {
+      loginMsg('No se pudo cargar Supabase (revisá la conexión o el bloqueo de scripts).');
+      return;
+    }
+
+    // Se dispara al volver de Google, al refrescar token y al cerrar sesión
+    _supabase.auth.onAuthStateChange((event, session) => {
+      if (session && session.user) onSignedIn(session.user);
+      else if (event === 'SIGNED_OUT') onSignedOut();
+    });
+
+    // Sesión ya existente (recarga de página)
+    const res = await _supabase.auth.getSession();
+    if (res.data && res.data.session && res.data.session.user) onSignedIn(res.data.session.user);
   }
 
-  /* AUTENTICACIÓN */
+  function reportAuthErrorFromUrl() {
+    const p = new URLSearchParams(location.search + '&' + location.hash.replace(/^#/, ''));
+    const desc = p.get('error_description');
+    if (desc) {
+      loginMsg('Error de acceso: ' + desc.replace(/\+/g, ' '));
+      history.replaceState({}, '', location.pathname);
+    }
+  }
+
   async function loginWithGoogle() {
-    toast('Redirigiendo a acceso con Google...');
-    // Integración OAuth con Supabase
+    if (!_supabase) return loginMsg('Supabase no está disponible.');
+    if (location.protocol === 'file:') return loginMsg('Abrí la app desde una dirección https:// (no desde un archivo local) para usar Google.');
+    loginMsg('');
     const { error } = await _supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        scopes: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.send'
+        redirectTo: location.origin + location.pathname,
+        queryParams: { prompt: 'select_account' }
       }
     });
-    if (error) toast('Error de inicio con Google: ' + error.message);
+    if (error) loginMsg('Error con Google: ' + error.message);
   }
 
-  function loginWithEmail(e) {
+  async function loginWithEmail(e) {
     e.preventDefault();
+    if (!_supabase) return loginMsg('Supabase no está disponible.');
+    loginMsg('');
+    const { error } = await _supabase.auth.signInWithPassword({
+      email: $('loginEmail').value.trim(),
+      password: $('loginPassword').value
+    });
+    if (error) loginMsg(error.message);
+  }
+
+  async function signUpWithEmail() {
+    if (!_supabase) return loginMsg('Supabase no está disponible.');
     const email = $('loginEmail').value.trim();
-    setSession({ email, name: email.split('@')[0] });
+    const password = $('loginPassword').value;
+    if (!email || password.length < 6) return loginMsg('Ingresá un correo y una contraseña de al menos 6 caracteres.');
+    const { error } = await _supabase.auth.signUp({
+      email, password,
+      options: { emailRedirectTo: location.origin + location.pathname }
+    });
+    if (error) return loginMsg(error.message);
+    toast('Cuenta creada. Revisá tu correo para confirmarla.');
   }
 
-  function checkSession() {
-    const savedUser = localStorage.getItem('pepeSession');
-    if (savedUser) {
-      setSession(JSON.parse(savedUser));
-    }
-  }
+  const isAdminUser = u => !!u && u.verified && u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  function setSession(user) {
-    currentUser = user;
-    localStorage.setItem('pepeSession', JSON.stringify(user));
-    $('loginScreen').classList.add('hidden');$('appLayout').classList.remove('hidden');
+  function onSignedIn(user) {
+    if (currentUser && currentUser.id === user.id) return; // evita doble ejecución
+    const meta = user.user_metadata || {};
+    currentUser = {
+      id: user.id,
+      email: user.email || '',
+      name: meta.full_name || meta.name || (user.email || '').split('@')[0],
+      verified: !!user.email_confirmed_at
+    };
 
-    const isAdmin = currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    
-    if (isAdmin) {
-      $('roleSwitcherBtn').classList.remove('hidden');
-      activeRole = 'admin';
-    } else {
-      $('roleSwitcherBtn').classList.add('hidden');
-      activeRole = 'cantor';
-    }
+    // Limpia ?code= / #access_token de la URL tras volver de Google
+    if (location.search || location.hash) history.replaceState({}, '', location.pathname);
 
-    // Asegurar registro del cantor
+    $('loginScreen').classList.add('hidden');
+    $('appLayout').classList.remove('hidden');
+
+    const admin = isAdminUser(currentUser);
+    $('roleSwitcherBtn').classList.toggle('hidden', !admin);
+    activeRole = admin ? 'admin' : 'cantor';
+
+    // Ficha de cantor propia
     let singer = data.singers.find(s => (s.email || '').toLowerCase() === currentUser.email.toLowerCase());
     if (!singer) {
-      singer = { id: uid(), name: currentUser.name || '', email: currentUser.email, doc: '', phone: '', origin: '', feePePena: '', feeFestival: '', optInComms: true };
-      data.singers.push(singer);
+      data.singers.push({ id: uid(), name: currentUser.name, email: currentUser.email, doc: '', phone: '', origin: '', feePePena: '', feeFestival: '' });
       saveData();
     }
-
     applyRoleUI();
   }
 
-  function logout() {
-    localStorage.removeItem('pepeSession');
-    location.reload();
+  function onSignedOut() {
+    currentUser = null;
+    $('appLayout').classList.add('hidden');
+    $('loginScreen').classList.remove('hidden');
+  }
+
+  async function logout() {
+    if (_supabase) await _supabase.auth.signOut();
+    onSignedOut();
   }
 
   function toggleRoleMode() {
-    if (currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return;
+    if (!isAdminUser(currentUser)) return;
     activeRole = activeRole === 'admin' ? 'cantor' : 'admin';
     applyRoleUI();
   }
@@ -687,35 +531,30 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
     $('roleLabel').textContent = isAdmin ? '👤 MODO: ADMIN' : '🎤 MODO: CANTOR';
     $('welcomeUser').textContent = `¡Hola, ${currentUser.name || 'Usuario'}!`;
     $('userEmailSub').textContent = `Sesión iniciada con: ${currentUser.email}`;
+    $('settingTargetInput').value = data.targetAmount || 100000;
 
+    renderAll();
     if (isAdmin) {
-      $('adminSidebar').classList.remove('hidden');$('btnNewRecord').classList.remove('hidden');
+      $('adminSidebar').classList.remove('hidden');
+      $('btnNewRecord').classList.remove('hidden');
       tab('home');
     } else {
-      $('adminSidebar').classList.add('hidden');$('btnNewRecord').classList.add('hidden');
+      $('adminSidebar').classList.add('hidden');
+      $('btnNewRecord').classList.add('hidden');
       document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
       $('cantorPortal').classList.remove('hidden');
       renderCantorPortal();
     }
-    renderAll();
   }
 
   function tab(tabName) {
     document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
     $(tabName).classList.remove('hidden');
     document.querySelectorAll('.sidebar-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
-
-    if (tabName === 'home') renderHome();
-    if (tabName === 'events') renderEvents();
-    if (tabName === 'content') renderContentList();
-    if (tabName === 'sponsors') renderSponsors();
-    if (tabName === 'singers') renderSingers();
-    if (tabName === 'opportunities') renderOpps();
-    if (tabName === 'finance') renderFinances();
-    if (tabName === 'comms') renderCampaigns();
+    renderAll();
   }
 
-  /* RENDERS DE MÓDULOS */
+  /* ================= RENDERS ================= */
   function updateTargetAmount(val) {
     data.targetAmount = Number(val) || 100000;
     saveData();
@@ -724,50 +563,64 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
   }
 
   function renderHome() {
-    const extraNet = data.finances.reduce((acc, curr) => acc + (curr.type === 'Ingreso' ? Number(curr.amount) : -Number(curr.amount)), 0);
+    const extraNet = data.finances.reduce((acc, f) => acc + (f.type === 'Ingreso' ? Number(f.amount) : -Number(f.amount)), 0);
     const target = data.targetAmount || 100000;
-    const pct = Math.min(100, Math.round((extraNet / target) * 100));
-
+    const pct = Math.max(0, Math.min(100, Math.round((extraNet / target) * 100)));
     $('objCurrent').textContent = money(extraNet);
-    $('objTarget').textContent = money(target);$('objProgress').style.width = `${pct}%`;
+    $('objTarget').textContent = money(target);
+    $('objProgress').style.width = `${pct}%`;
 
-    const sponsorPending = data.sponsors.reduce((acc, curr) => acc + Math.max(0, (Number(curr.amount)||0) - (Number(curr.paid)||0)), 0);
+    const sponsorPending = data.sponsors.reduce((acc, s) => acc + Math.max(0, (Number(s.amount) || 0) - (Number(s.paid) || 0)), 0);
     $('sponsorsPending').textContent = money(sponsorPending);
     $('extraNet').textContent = money(extraNet);
     $('balanceNet').textContent = money(sponsorPending + extraNet);
 
-    const pendingContent = data.content.filter(c => c.status !== 'Publicado').slice(0, 5);
-    $('homeContentTasks').innerHTML = pendingContent.length ? pendingContent.map(c => `
-      <div class="record" style="display:flex; justify-content:space-between; align-items:center;">
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = data.events.filter(e => e.date && e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    if (upcoming.length) {
+      $('nextEventTitle').textContent = upcoming[0].title;
+      $('nextEventMeta').textContent = `📅 ${upcoming[0].date} | 📍 ${upcoming[0].place || 'Sede a confirmar'}`;
+    } else {
+      $('nextEventTitle').textContent = 'Sin eventos próximos';
+      $('nextEventMeta').textContent = 'Planificá nuevas fechas desde el módulo de eventos.';
+    }
+    $('homeCalendarAgenda').innerHTML = upcoming.slice(0, 5).map(e => `
+      <div class="agenda-item"><b>${esc(e.title)}</b><div style="color:var(--muted);">${esc(e.date)} · ${esc(e.place || '')}</div></div>
+    `).join('') || '<div style="color:var(--muted);">Sin eventos agendados.</div>';
+
+    const pending = data.content.filter(c => c.status !== 'Publicado').slice(0, 5);
+    $('homeContentTasks').innerHTML = pending.length ? pending.map(c => `
+      <div class="record" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
         <div>
           <b>${esc(c.title)}</b> (${esc(c.platform)})
-          <div style="font-size:11px; color:var(--muted);">Previsto: ${esc(c.pubDate || 'Sin fecha')}</div>
+          <div style="font-size:11px; color:var(--muted);">Estado: ${esc(c.status)}</div>
         </div>
         <div style="display:flex; gap:6px;">
-          ${c.fileUrl ? `<a href="${esc(c.fileUrl)}" target="_blank" class="btn sm">📥 Archivo</a>` : ''}
-          <button class="btn sm" onclick="copyText('${esc(c.copy || '')}')">📋 Copy</button>
+          ${safeUrl(c.fileUrl) ? `<a href="${esc(safeUrl(c.fileUrl))}" target="_blank" rel="noopener" class="btn sm">📥 Archivo</a>` : ''}
+          <button class="btn sm" onclick="copyById(${c.id})">📋 Copy</button>
         </div>
       </div>
     `).join('') : '<div class="empty">No hay publicaciones pendientes.</div>';
   }
 
-  function copyText(txt) {
-    navigator.clipboard.writeText(txt);
-    toast('¡Copy copiado al portapapeles!');
+  function copyById(id) {
+    const c = data.content.find(x => x.id === id);
+    if (!c) return;
+    if (navigator.clipboard) navigator.clipboard.writeText(c.copy || '').then(() => toast('¡Copy copiado al portapapeles!'), () => toast('No se pudo copiar'));
+    else toast('Tu navegador no permite copiar automáticamente');
   }
 
   function renderContentList() {
-    const container = $('contentList');
-    container.innerHTML = data.content.length ? data.content.map(c => `
-      <div class="record" style="display:flex; justify-content:space-between; align-items:center;">
+    $('contentList').innerHTML = data.content.length ? data.content.map(c => `
+      <div class="record" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
         <div>
           <h4 style="margin:0; color:var(--wine);">${esc(c.title)}</h4>
           <div style="font-size:12px; color:var(--muted);">Red: <b>${esc(c.platform)}</b> | Estado: <b>${esc(c.status)}</b></div>
-          <p style="margin:4px 0; font-size:12px; background:#faf7f2; padding:6px; border-radius:4px;">${esc(c.copy || 'Sin descripción')}</p>
+          <p style="margin:4px 0; font-size:12px; background:#faf7f2; padding:6px; border-radius:4px; white-space:pre-wrap;">${esc(c.copy || 'Sin descripción')}</p>
         </div>
         <div style="display:flex; flex-direction:column; gap:4px;">
-          ${c.fileUrl ? `<a href="${esc(c.fileUrl)}" target="_blank" class="btn sm">📥 Descargar Archivo</a>` : ''}
-          <button class="btn sm" onclick="copyText('${esc(c.copy || '')}')">📋 Copiar Texto</button>
+          ${safeUrl(c.fileUrl) ? `<a href="${esc(safeUrl(c.fileUrl))}" target="_blank" rel="noopener" class="btn sm">📥 Descargar Archivo</a>` : ''}
+          <button class="btn sm" onclick="copyById(${c.id})">📋 Copiar Texto</button>
           <button class="btn sm dark" style="background:var(--wine);" onclick="openForm('content', ${c.id})">✏️ Editar</button>
         </div>
       </div>
@@ -776,15 +629,12 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
 
   function renderSponsors() {
     $('sponsorKanbanView').innerHTML = SPONSOR_STAGES.map(stage => {
-      const colItems = data.sponsors.filter(s => (s.status || 'Prospecto') === stage);
+      const items = data.sponsors.filter(s => (s.status || 'Prospecto') === stage);
       return `
         <div class="kanban-col">
-          <div class="kanban-col-head">
-            <h3>${stage}</h3>
-            <span>${colItems.length}</span>
-          </div>
+          <div class="kanban-col-head"><h3>${stage}</h3><span>${items.length}</span></div>
           <div class="kanban-cards">
-            ${colItems.map(s => `
+            ${items.map(s => `
               <div class="kanban-card" onclick="openForm('sponsor', ${s.id})">
                 <b>${esc(s.name)}</b>
                 <div style="font-size:11px; color:var(--muted);">📞 ${esc(s.phone || 'Sin tel')} | ✉️ ${esc(s.email || 'Sin mail')}</div>
@@ -792,160 +642,198 @@ input[readonly] { background: #f0ebe1; cursor: not-allowed; }
               </div>
             `).join('') || '<div style="font-size:11px; color:var(--muted); text-align:center;">—</div>'}
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('');
   }
 
-  function renderCantorPortal() {
-    const singer = data.singers.find(s => (s.email || '').toLowerCase() === currentUser.email.toLowerCase()) || {};
-    $('cantorProfileForm').innerHTML = `
-      <form onsubmit="saveCantorProfile(event, ${singer.id})">
-        <div class="form-grid">
-          <div class="field full"><label>Correo Electrónico (Fijo)</label><input value="${esc(currentUser.email)}" readonly></div>
-          <div class="field full"><label>Nombre Completo *</label><input name="name" value="${esc(singer.name || '')}" required></div>
-          <div class="field"><label>Documento de Identidad *</label><input name="doc" value="${esc(singer.doc || '')}" required><span class="field-note">sólo será útil para facilitar accesos a eventos o proyectos culturales</span></div>
-          <div class="field"><label>Teléfono *</label><input name="phone" value="${esc(singer.phone || '')}" required></div>
-          <div class="field"><label>Punto de Partida Habitual</label><input name="origin" value="${esc(singer.origin || '')}" placeholder="Localidad de base"></div>
-          <div class="field"><label>Caché Peña (Mín)</label><input type="number" name="feePePena" value="${singer.feePePena || ''}"></div>
-          <div class="field"><label>Caché Festival (Máx)</label><input type="number" name="feeFestival" value="${singer.feeFestival || ''}"></div>
+  function renderSingers() {
+    $('cTable').innerHTML = data.singers.length ? `
+      <table class="table">
+        <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Documento</th><th></th></tr></thead>
+        <tbody>${data.singers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.email)}</td><td>${esc(s.phone)}</td><td>${esc(s.doc)}</td><td><button class="btn sm" onclick="openForm('singer', ${s.id})">Editar</button></td></tr>`).join('')}</tbody>
+      </table>` : '<div class="empty">Sin cantores.</div>';
+  }
+
+  function renderOpps() {
+    $('oList').innerHTML = data.opps.length ? data.opps.map(o => `
+      <div class="record" style="display:flex; justify-content:space-between; align-items:center;">
+        <div><b>${esc(o.title)}</b> - Límite: ${esc(o.deadline || '—')}<div style="font-size:12px; color:var(--muted);">${esc(o.details || '')}</div></div>
+        <button class="btn sm" onclick="openForm('opportunity', ${o.id})">Editar</button>
+      </div>`).join('') : '<div class="empty">Sin oportunidades.</div>';
+  }
+
+  function renderEvents() {
+    $('eventsList').innerHTML = data.events.length ? data.events.map(e => `
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b>${esc(e.title)}</b><span class="pill">${esc(e.date || '')}</span>
         </div>
-        <button type="submit" class="btn primary" style="margin-top:10px;">💾 Actualizar Mis Datos</button>
-      </form>
-    `;
-
-    $('cantorOppsList').innerHTML = data.opps.length ? data.opps.map(o => `
-      <div class="record">
-        <b>${esc(o.title)}</b> - Límite: ${esc(o.deadline)}
-        <p style="font-size:12px; color:var(--muted); margin:4px 0;">${esc(o.details || 'Sin detalles adiconales.')}</p>
-      </div>
-    `).join('') : '<div class="empty">Sin convocatorias activas.</div>';
+        <div style="font-size:12px; color:var(--muted);">📍 ${esc(e.place || 'Sede sin especificar')}</div>
+        <div style="white-space:pre-wrap; font-size:12px; margin-top:6px;">${esc(e.activities || '')}</div>
+        <button class="btn sm" style="margin-top:8px;" onclick="openForm('event', ${e.id})">Editar</button>
+      </div>`).join('') : '<div class="empty">Sin eventos.</div>';
   }
 
-  function saveCantorProfile(e, id) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const obj = {};
-    formData.forEach((v, k) => obj[k] = v);
-
-    const idx = data.singers.findIndex(s => s.id === id);
-    if (idx !== -1) {
-      data.singers[idx] = { ...data.singers[idx], ...obj };
-      saveData();
-      toast('Perfil actualizado correctamente');
-    }
-  }
-
-  function openForm(type, id = null) {
-    const rec = id ? ((data[type + 's'] || data[type] || []).find(x => x.id === id) || {}) : {};
-    let fields = '';
-    let title = 'Registro';
-
-    if (type === 'sponsor') {
-      title = 'Sponsor Commercial';
-      fields = `
-        <div class="field full"><label>Empresa *</label><input name="name" value="${esc(rec.name||'')}" required></div>
-        <div class="field"><label>Teléfono de Contacto</label><input name="phone" value="${esc(rec.phone||'')}"></div>
-        <div class="field"><label>Correo Electrónico</label><input type="email" name="email" value="${esc(rec.email||'')}"></div>
-        <div class="field"><label>Estado</label><select name="status">${SPONSOR_STAGES.map(s=>`<option value="${s}" ${rec.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
-        <div class="field"><label>Importe (UYU)</label><input type="number" name="amount" value="${rec.amount||0}"></div>
-      `;
-    } else if (type === 'content') {
-      title = 'Programar Publicación';
-      fields = `
-        <div class="field full"><label>Título / Pauta *</label><input name="title" value="${esc(rec.title||'')}" required></div>
-        <div class="field"><label>Plataforma</label><select name="platform"><option>Instagram</option><option>Facebook</option><option>TikTok</option></select></div>
-        <div class="field"><label>Estado</label><select name="status"><option>Pauta</option><option>Producción</option><option>Listo</option><option>Publicado</option></select></div>
-        <div class="field full"><label>Link / URL del Archivo Multimedia (Para descargar)</label><input name="fileUrl" value="${esc(rec.fileUrl||'')}" placeholder="https://drive.google.com/..."></div>
-        <div class="field full"><label>Texto / Copy preparado</label><textarea name="copy">${esc(rec.copy||'')}</textarea></div>
-      `;
-    } else if (type === 'campaign') {
-      title = 'Diagramación de Boletín Informativo';
-      fields = `
-        <div class="field full"><label>Título del Boletín *</label><input name="title" value="${esc(rec.title||'')}" required></div>
-        <div class="field full"><label>Audiencia Destinataria</label><select name="audience"><option value="Todos">Todos (Cantores y Sponsors)</option><option value="Cantores">Solo Cantores</option><option value="Sponsors">Solo Sponsors</option></select></div>
-        
-        <div class="banner-box">🖼️ Banner Superior Recomendado (Medidas: 1200 x 400 px)</div>
-        <div class="field full"><label>URL Imagen Banner Superior</label><input name="topBanner" value="${esc(rec.topBanner||'')}"></div>
-
-        <div class="field full"><label>Cuerpo / Detalle del Mensaje</label><textarea name="message" style="height:120px;">${esc(rec.message||'')}</textarea></div>
-
-        <div class="banner-box">🖼️ Banner Inferior Recomendado (Medidas: 1200 x 200 px)</div>
-        <div class="field full"><label>URL Imagen Banner Inferior</label><input name="bottomBanner" value="${esc(rec.bottomBanner||'')}"></div>
-      `;
-    }
-
-    const html = `
-      <form onsubmit="saveFormSubmit(event, '${type}', ${id})">
-        <div class="form-grid">${fields}</div>
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
-          <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
-          <button type="submit" class="btn primary">Guardar</button>
-        </div>
-      </form>
-    `;
-    openCustomModal(title, html);
-  }
-
-  function saveFormSubmit(e, type, id) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const obj = {};
-    formData.forEach((v, k) => obj[k] = v);
-
-    let targetKey = type + 's';
-    if (type === 'content') targetKey = 'content';
-
-    if (!data[targetKey]) data[targetKey] = [];
-
-    if (id) {
-      const idx = data[targetKey].findIndex(x => x.id === id);
-      if (idx !== -1) data[targetKey][idx] = { ...data[targetKey][idx], ...obj };
-    } else {
-      data[targetKey].unshift({ id: uid(), ...obj });
-    }
-
-    saveData();
-    closeModal();
-    renderAll();
-    toast('Guardado con éxito');
+  function renderFinances() {
+    $('fTable').innerHTML = data.finances.length ? `
+      <table class="table">
+        <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+        <tbody>${data.finances.map(f => `<tr><td>${esc(f.date || '')}</td><td>${esc(f.concept)}</td><td>${esc(f.type)}</td><td>${money(f.amount)}</td></tr>`).join('')}</tbody>
+      </table>` : '<div class="empty">Sin movimientos.</div>';
   }
 
   function renderCampaigns() {
     $('campaignsList').innerHTML = data.campaigns.length ? data.campaigns.map(c => `
       <div class="record">
         <b>${esc(c.title)}</b> <span class="pill blue">${esc(c.audience || 'Todos')}</span>
-        <p style="font-size:12px; margin:6px 0;">${esc(c.message || '')}</p>
-      </div>
-    `).join('') : '<div class="empty">No hay boletines preparados.</div>';
+        <p style="font-size:12px; margin:6px 0; white-space:pre-wrap;">${esc(c.message || '')}</p>
+      </div>`).join('') : '<div class="empty">No hay boletines preparados.</div>';
   }
 
-  function renderEvents() {
-    $('eventsList').innerHTML = data.events.length ? data.events.map(e => `
-      <div class="panel"><b>${esc(e.title)}</b> - ${esc(e.date || '')}</div>
-    `).join('') : '<div class="empty">Sin eventos.</div>';
+  function renderCantorPortal() {
+    if (!currentUser) return;
+    const singer = data.singers.find(s => (s.email || '').toLowerCase() === currentUser.email.toLowerCase()) || {};
+    $('cantorProfileForm').innerHTML = `
+      <form onsubmit="saveCantorProfile(event, ${Number(singer.id) || 0})">
+        <div class="form-grid">
+          <div class="field full"><label>Correo Electrónico (Fijo)</label><input value="${esc(currentUser.email)}" readonly></div>
+          <div class="field full"><label>Nombre Completo *</label><input name="name" value="${esc(singer.name || '')}" required></div>
+          <div class="field"><label>Documento de Identidad *</label><input name="doc" value="${esc(singer.doc || '')}" required><span class="field-note">sólo será útil para facilitar accesos a eventos o proyectos culturales</span></div>
+          <div class="field"><label>Teléfono *</label><input name="phone" value="${esc(singer.phone || '')}" required></div>
+          <div class="field"><label>Punto de Partida Habitual</label><input name="origin" value="${esc(singer.origin || '')}" placeholder="Localidad de base"></div>
+          <div class="field"><label>Caché Peña (Mín)</label><input type="number" name="feePePena" value="${esc(singer.feePePena || '')}"></div>
+          <div class="field"><label>Caché Festival (Máx)</label><input type="number" name="feeFestival" value="${esc(singer.feeFestival || '')}"></div>
+        </div>
+        <button type="submit" class="btn primary" style="margin-top:10px;">💾 Actualizar Mis Datos</button>
+      </form>`;
+
+    $('cantorOppsList').innerHTML = data.opps.length ? data.opps.map(o => `
+      <div class="record">
+        <b>${esc(o.title)}</b> - Límite: ${esc(o.deadline || '—')}
+        <p style="font-size:12px; color:var(--muted); margin:4px 0;">${esc(o.details || 'Sin detalles adicionales.')}</p>
+      </div>`).join('') : '<div class="empty">Sin convocatorias activas.</div>';
   }
 
-  function renderSingers() {
-    $('cTable').innerHTML = data.singers.length ? `
-      <table class="table">
-        <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Documento</th></tr></thead>
-        <tbody>${data.singers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.email)}</td><td>${esc(s.phone)}</td><td>${esc(s.doc)}</td></tr>`).join('')}</tbody>
-      </table>
-    ` : '<div class="empty">Sin cantores.</div>';
+  function saveCantorProfile(e, id) {
+    e.preventDefault();
+    const obj = {};
+    new FormData(e.target).forEach((v, k) => obj[k] = v);
+    ['feePePena', 'feeFestival'].forEach(k => { if (obj[k] !== '') obj[k] = Number(obj[k]); });
+    const idx = data.singers.findIndex(s => s.id === id);
+    if (idx === -1) return toast('No se encontró tu ficha');
+    data.singers[idx] = { ...data.singers[idx], ...obj };
+    saveData();
+    toast('Perfil actualizado correctamente');
   }
 
-  function renderOpps() {
-    $('oList').innerHTML = data.opps.length ? data.opps.map(o => `<div class="record"><b>${esc(o.title)}</b></div>`).join('') : '<div class="empty">Sin oportunidades.</div>';
+  /* ================= FORMULARIOS ================= */
+  function openNewRecordSelector() {
+    const card = (t, icon, title, desc) => `<div class="selector-card" onclick="closeModal(); openForm('${t}');"><h3>${icon} ${title}</h3><p>${desc}</p></div>`;
+    openCustomModal('Nuevo Registro', `
+      <p>Elegí la categoría de registro:</p>
+      <div class="selector-grid">
+        ${card('event', '📅', 'Evento', 'Nueva fecha de peña o festival.')}
+        ${card('content', '📱', 'Contenido', 'Publicación para redes.')}
+        ${card('sponsor', '🏢', 'Sponsor', 'Marca o acuerdo comercial.')}
+        ${card('singer', '🎤', 'Cantor', 'Ficha de cantor o músico.')}
+        ${card('opportunity', '📢', 'Oportunidad', 'Llamado o convocatoria.')}
+        ${card('finance', '💰', 'Finanza Extra', 'Ingreso o egreso no habitual.')}
+        ${card('campaign', '💬', 'Boletín', 'Comunicación segmentada.')}
+      </div>`);
   }
 
-  function renderFinances() {
-    $('fTable').innerHTML = data.finances.length ? `
-      <table class="table">
-        <thead><tr><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
-        <tbody>${data.finances.map(f => `<tr><td>${esc(f.concept)}</td><td>${esc(f.type)}</td><td>${money(f.amount)}</td></tr>`).join('')}</tbody>
-      </table>
-    ` : '<div class="empty">Sin movimientos.</div>';
+  function openForm(type, id = null) {
+    const list = data[COLL[type]] || [];
+    const rec = id ? (list.find(x => x.id === id) || {}) : {};
+    let fields = '';
+    let title = 'Registro';
+
+    if (type === 'sponsor') {
+      title = 'Sponsor Comercial';
+      fields = `
+        <div class="field full"><label>Empresa *</label><input name="name" value="${esc(rec.name || '')}" required></div>
+        <div class="field"><label>Teléfono de Contacto</label><input name="phone" value="${esc(rec.phone || '')}"></div>
+        <div class="field"><label>Correo Electrónico</label><input type="email" name="email" value="${esc(rec.email || '')}"></div>
+        <div class="field"><label>Estado</label><select name="status">${opts(SPONSOR_STAGES, rec.status || 'Prospecto')}</select></div>
+        <div class="field"><label>Importe (UYU)</label><input type="number" name="amount" value="${esc(rec.amount || 0)}"></div>
+        <div class="field"><label>Cobrado (UYU)</label><input type="number" name="paid" value="${esc(rec.paid || 0)}"></div>`;
+    } else if (type === 'content') {
+      title = 'Programar Publicación';
+      fields = `
+        <div class="field full"><label>Título / Pauta *</label><input name="title" value="${esc(rec.title || '')}" required></div>
+        <div class="field"><label>Plataforma</label><select name="platform">${opts(['Instagram', 'Facebook', 'TikTok', 'YouTube'], rec.platform)}</select></div>
+        <div class="field"><label>Estado</label><select name="status">${opts(['Pauta', 'Producción', 'Listo', 'Publicado'], rec.status)}</select></div>
+        <div class="field full"><label>Link / URL del Archivo Multimedia (Para descargar)</label><input name="fileUrl" value="${esc(rec.fileUrl || '')}" placeholder="https://drive.google.com/..."></div>
+        <div class="field full"><label>Texto / Copy preparado</label><textarea name="copy">${esc(rec.copy || '')}</textarea></div>`;
+    } else if (type === 'event') {
+      title = 'Planificar Evento';
+      fields = `
+        <div class="field full"><label>Título del Evento *</label><input name="title" value="${esc(rec.title || '')}" required></div>
+        <div class="field"><label>Fecha *</label><input type="date" name="date" value="${esc(rec.date || '')}" required></div>
+        <div class="field"><label>Lugar / Sede</label><input name="place" value="${esc(rec.place || '')}"></div>
+        <div class="field full"><label>Grilla de Artistas / Actividades</label><textarea name="activities">${esc(rec.activities || '')}</textarea></div>`;
+    } else if (type === 'finance') {
+      title = 'Movimiento Financiero Extra';
+      fields = `
+        <div class="field full"><label>Concepto *</label><input name="concept" value="${esc(rec.concept || '')}" required></div>
+        <div class="field"><label>Tipo</label><select name="type">${opts(['Ingreso', 'Egreso'], rec.type)}</select></div>
+        <div class="field"><label>Monto (UYU) *</label><input type="number" name="amount" value="${esc(rec.amount || '')}" required></div>
+        <div class="field"><label>Fecha</label><input type="date" name="date" value="${esc(rec.date || new Date().toISOString().slice(0, 10))}"></div>`;
+    } else if (type === 'singer') {
+      title = 'Ficha de Cantor';
+      fields = `
+        <div class="field full"><label>Nombre *</label><input name="name" value="${esc(rec.name || '')}" required></div>
+        <div class="field full"><label>Correo Electrónico</label><input type="email" name="email" value="${esc(rec.email || '')}"></div>
+        <div class="field"><label>Documento de Identidad</label><input name="doc" value="${esc(rec.doc || '')}"></div>
+        <div class="field"><label>Teléfono</label><input name="phone" value="${esc(rec.phone || '')}"></div>
+        <div class="field"><label>Punto de Partida</label><input name="origin" value="${esc(rec.origin || '')}"></div>
+        <div class="field"><label>Caché Peña (Mín)</label><input type="number" name="feePePena" value="${esc(rec.feePePena || '')}"></div>
+        <div class="field"><label>Caché Festival (Máx)</label><input type="number" name="feeFestival" value="${esc(rec.feeFestival || '')}"></div>`;
+    } else if (type === 'opportunity') {
+      title = 'Convocatoria';
+      fields = `
+        <div class="field full"><label>Título *</label><input name="title" value="${esc(rec.title || '')}" required></div>
+        <div class="field"><label>Fecha Límite</label><input type="date" name="deadline" value="${esc(rec.deadline || '')}"></div>
+        <div class="field full"><label>Detalles / Requisitos</label><textarea name="details">${esc(rec.details || '')}</textarea></div>`;
+    } else if (type === 'campaign') {
+      title = 'Diagramación de Boletín Informativo';
+      fields = `
+        <div class="field full"><label>Título del Boletín *</label><input name="title" value="${esc(rec.title || '')}" required></div>
+        <div class="field full"><label>Audiencia Destinataria</label><select name="audience">${opts(['Todos', 'Cantores', 'Sponsors'], rec.audience)}</select></div>
+        <div class="banner-box">🖼️ Banner Superior Recomendado (1200 x 400 px)</div>
+        <div class="field full"><label>URL Imagen Banner Superior</label><input name="topBanner" value="${esc(rec.topBanner || '')}"></div>
+        <div class="field full"><label>Cuerpo / Detalle del Mensaje</label><textarea name="message" style="height:120px;">${esc(rec.message || '')}</textarea></div>
+        <div class="banner-box">🖼️ Banner Inferior Recomendado (1200 x 200 px)</div>
+        <div class="field full"><label>URL Imagen Banner Inferior</label><input name="bottomBanner" value="${esc(rec.bottomBanner || '')}"></div>`;
+    }
+
+    openCustomModal(title, `
+      <form onsubmit="saveFormSubmit(event, '${type}', ${id === null ? 'null' : Number(id)})">
+        <div class="form-grid">${fields}</div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+          <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn primary">Guardar</button>
+        </div>
+      </form>`);
+  }
+
+  function saveFormSubmit(e, type, id) {
+    e.preventDefault();
+    const obj = {};
+    new FormData(e.target).forEach((v, k) => obj[k] = NUMERIC.includes(k) && v !== '' ? Number(v) : v);
+
+    const key = COLL[type];
+    if (!data[key]) data[key] = [];
+    if (id) {
+      const idx = data[key].findIndex(x => x.id === id);
+      if (idx !== -1) data[key][idx] = { ...data[key][idx], ...obj };
+    } else {
+      data[key].unshift({ id: uid(), ...obj });
+    }
+    saveData();
+    closeModal();
+    renderAll();
+    toast('Guardado con éxito');
   }
 
   function openCustomModal(title, html) {
